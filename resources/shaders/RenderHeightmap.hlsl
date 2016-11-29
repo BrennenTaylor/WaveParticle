@@ -26,7 +26,7 @@ PS_INPUT VSMain(VS_INPUT input)
 	PS_INPUT output;
     float3 newPos = input.position;
     float3 readSample = MainTexture.SampleLevel(MainTextureSamplerState, input.uv, 0).xyz;
-    newPos.y = readSample.x;
+    newPos.y = readSample.x * 5;
     //if (newPos.y > 1.0f)
     //{
     //    newPos.y = 1.0f;
