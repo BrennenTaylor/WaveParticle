@@ -1,0 +1,11 @@
+These are notes on things and decisions I've made. Trust these unless you have a really good reason.
+
+DO NOT DO THESE THINGS, THEY HAVE BEEN TRIED AND FAILED...
+	
+	1. Have all "engine systems" be global. This is terrible and leads to dependencies that are hard to see in constructor and initialization stages.
+    2. Get stuck researching too much, just start implementing. Refactoring happens later
+    3. The build system is fine, move on and code some shit dude!!
+    4. 
+
+Build System Notes:
+	Run Setup.bat, then can call build.bat. Only call setup once.

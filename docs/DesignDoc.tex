@@ -1,0 +1,42 @@
+\documentclass {article}
+
+\title{Farlor Engine Design Document}
+\author{Brennen Taylor}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+This is the introduction section of the article.
+
+\section{Requirements of the Engine}
+I would like the game engine to support the following feature set:
+
+\begin{itemize}
+	\item Cross Platform PC OS's
+	\item Support 3D Games
+	\item Support D3D and OpenGL Renderers
+	\item Cross Platform Networking
+\end{itemize}
+
+\section{Toolset of the Engine}
+The following toolset will be used to develop.
+
+\begin{itemize}
+	\item Language: C++
+	\item Build System: CMake
+	\item Graphics APIs: Direct3D 11
+	\item Windowing APIS: Win32
+\end{itemize}
+
+\section{Renderer}
+For now, the rendering engine only supports Direct3D 11.
+
+The entities should not be responsible for drawing themselves. They (or just their renderable components) should be passed to the rendering engine and the rendering engine should have the responsibility of rendering them.
+
+\begin{itemize}
+	\item Renderer Interface
+
+\end{itemize}
+
+\end{document}

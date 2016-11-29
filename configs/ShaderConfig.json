@@ -1,0 +1,29 @@
+{
+    "shaders" :
+    [
+        {
+            "filename" : "FullscreenQuad.hlsl",
+            "name" : "FullscreenQuad",
+            "hasVS" : true,
+            "hasPS" : true
+        },
+        {
+            "filename" : "vertex_position_uv_normal.hlsl",
+            "name" : "VertexPositionUVNormal",
+            "hasVS" : true,
+            "hasPS" : true
+        },
+        {
+            "filename" : "PositionUV.hlsl",
+            "name" : "PositionUV",
+            "hasVS" : true,
+            "hasPS" : true
+        },
+        {
+            "filename" : "RenderHeightmap.hlsl",
+            "name" : "RenderHeightmap",
+            "hasVS" : true,
+            "hasPS" : true
+        }
+    ]
+}

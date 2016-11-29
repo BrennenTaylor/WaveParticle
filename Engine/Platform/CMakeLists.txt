@@ -1,0 +1,15 @@
+set (ENGINE_SOURCES
+
+    ${ENGINE_SOURCES}
+
+    PARENT_SCOPE
+)
+
+set (ENGINE_INCLUDES
+
+    ${ENGINE_INCLUDES}
+
+    Platform/Platform.h
+
+    PARENT_SCOPE
+)
