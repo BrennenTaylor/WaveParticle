@@ -159,6 +159,14 @@ namespace Farlor
 
         m_pDeviceContext->RSSetState(m_rasterState);
 
+        rasterDesc.m_rasterDesc.CullMode = D3D11_CULL_NONE;
+        rasterDesc.m_rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
+        result = m_pDevice->CreateRasterizerState(&rasterDesc.m_rasterDesc, &m_rasterStateNoCull);
+        if (FAILED(result))
+        {
+            cout << "Failed to create raster state" << endl;
+        }
+
         // Create and set viewport
         D3D11_VIEWPORT viewport = {0};
         viewport.TopLeftX = 0.0f;
@@ -303,6 +311,9 @@ namespace Farlor
             cout << "Failed to create wave particle staging texture" << endl;
         }
 
+        // Create vertex staging data
+        m_pHeightmapPositions = new Vector4[m_width * m_height];
+
         D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
         ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
         renderTargetViewDesc.Format = waveParticleTextureDesc.Format;
@@ -425,18 +436,32 @@ namespace Farlor
         m_pDeviceContext->ClearRenderTargetView(m_pWPRTView, clearColor);
 
         // Render the wave particles
+        // m_pDeviceContext->RSSetState(m_rasterState);
         m_pDeviceContext->OMSetDepthStencilState(pDSState, 0);
 
         m_pDeviceContext->OMSetBlendState(m_pEnableAlphaBlending, 0, 0xffffffff);
         g_WaveParticles.Render(m_pDevice, m_pDeviceContext, m_pParticleTextureResourceView, m_pWPSampleState);
         m_pDeviceContext->OMSetBlendState(m_pDisableAlphaBlending, 0, 0xffffffff);
 
+        // Read back the heightmap texture
+        // m_pDeviceContext->CopyResource(m_pWaveParticleStagingResource, m_pWaveParticleRenderTarget);
+        // D3D11_MAPPED_SUBRESOURCE mappedSubResource;
+        //
+        // m_pDeviceContext->Map(m_pWaveParticleStagingResource, 0, D3D11_MAP_READ, 0, &mappedSubResource);
+        // memcpy(m_pHeightmapPositions, mappedSubResource.pData, sizeof(Vector4)*m_height*m_width);
+        // m_pDeviceContext->Unmap(m_pWaveParticleStagingResource, 0);
+        //
+        //
+        // m_terrain.UpdateMesh(m_pHeightmapPositions);
+
         // Render the terrain
+        m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
         m_camView = g_MainCamera.m_camView;
         m_pDeviceContext->ClearDepthStencilView(m_depthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
         m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_depthStencilView);
-        m_pDeviceContext->RSSetState(m_rasterState);
+        // m_pDeviceContext->RSSetState(m_rasterState);
 
+        m_pDeviceContext->RSSetState(m_rasterStateNoCull);
         m_terrain.Render(m_pDevice, m_pDeviceContext, m_pWPSRView, m_pWPSampleState);
 
         m_pSwapChain->Present(0, 0);

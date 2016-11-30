@@ -391,6 +391,12 @@ namespace Farlor
                     Sample leftSample;
                     Sample rightSample;
 
+                    Vector3 leftCollisionNormal;
+                    Vector3 rightCollisionNormal;
+
+                    float leftCollisionAngle;
+                    float rightCollisionAngle;
+
                     float angle = m_waveParticles[i].m_dispersionAngle;
 
                     Vector3 direction = m_waveParticles[i].m_direction;
@@ -457,6 +463,8 @@ namespace Farlor
                             if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
                             {
                                 leftSample.m_isCollision = true;
+                                leftCollisionNormal =  direction.Normalized() - lineDir.Normalized();
+                                leftCollisionAngle = acos(direction.Normalized().Dot(lineDir.Normalized()));
                                 numCollided++;
                                 break;
                             }
@@ -513,6 +521,8 @@ namespace Farlor
                         if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
                         {
                             rightSample.m_isCollision = true;
+                            rightCollisionNormal =  direction.Normalized() - lineDir.Normalized();
+                            rightCollisionAngle = acos(direction.Normalized().Dot(lineDir.Normalized()));
                             numCollided++;
                             break;
                         }
@@ -543,12 +553,13 @@ namespace Farlor
                 {
                     cout << "Handling left collision" << endl;
 
-                    Vector3 newParticleDirection{1.0f, 1.0f, 0.0f};
-                    newParticleDirection = newParticleDirection.Normalized();
+                    // Vector3 newParticleDirection{1.0f, 1.0f, 0.0f};
+                    // newParticleDirection = newParticleDirection.Normalized();
+                    Vector3 newParticleDirection = leftCollisionNormal.Normalized();
                     newParticleDirection *= speed;
                     WaveParticle particleLeft = WaveParticle(leftSample.m_newPosition,
                         newParticleDirection, g_TimerGame.TotalTime());
-                    particleLeft.m_dispersionAngle = DEGREE_TO_RAD(90.0f);
+                    particleLeft.m_dispersionAngle = leftCollisionAngle;
                     particleLeft.m_birthPosition = leftSample.m_newPosition;
 
                     AddParticle(particleLeft);
@@ -559,12 +570,13 @@ namespace Farlor
                 {
                     cout << "Handling right collision" << endl;
 
-                    Vector3 newParticleDirection{-1.0f, 1.0f, 0.0f};
-                    newParticleDirection = newParticleDirection.Normalized();
+                    // Vector3 newParticleDirection{-1.0f, 1.0f, 0.0f};
+                    // newParticleDirection = newParticleDirection.Normalized();
+                    Vector3 newParticleDirection = rightCollisionNormal.Normalized();
                     newParticleDirection *= speed;
                     WaveParticle particleRight = WaveParticle(rightSample.m_newPosition,
                         newParticleDirection, g_TimerGame.TotalTime());
-                    particleRight.m_dispersionAngle = DEGREE_TO_RAD(90.0f);
+                    particleRight.m_dispersionAngle = rightCollisionAngle;
                     particleRight.m_birthPosition = rightSample.m_newPosition;
 
                     AddParticle(particleRight);

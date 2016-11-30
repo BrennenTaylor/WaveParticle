@@ -90,6 +90,7 @@ class Renderer
         ID3D11ShaderResourceView* m_pDepthScencilSRV;
 
         ID3D11RasterizerState* m_rasterState;
+        ID3D11RasterizerState* m_rasterStateNoCull;
 
         ID3D11Buffer* m_cbTransformsBuffer;
         cbTransforms m_cbTransforms;
@@ -138,6 +139,8 @@ class Renderer
         ID3D11DepthStencilState * pDSState;
 
         Terrain m_terrain;
+
+        Vector4 *m_pHeightmapPositions;
 
 
         static std::map<std::string, RenderResourceType> s_stringToTypeMapping;

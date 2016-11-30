@@ -16,6 +16,8 @@ namespace Farlor
 
         void Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext, ID3D11ShaderResourceView* pWSRView, ID3D11SamplerState* pWPSampleState);
 
+        void UpdateMesh(Vector4 *pPositions);
+
     public:
         int m_width;
         int m_height;

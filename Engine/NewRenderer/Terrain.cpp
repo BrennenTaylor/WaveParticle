@@ -114,6 +114,12 @@ namespace Farlor
         pDeviceContext->DrawIndexed(m_indexCount, 0, 0);
     }
 
+    void Terrain::UpdateMesh(Vector4 *pPositions)
+    {
+        int numSubX = 500;
+        int numSubZ = 500;
+    }
+
     void Terrain::InitializeBuffers(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext)
     {
         HRESULT result;
