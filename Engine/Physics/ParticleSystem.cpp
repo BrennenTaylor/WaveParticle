@@ -463,8 +463,13 @@ namespace Farlor
                             if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
                             {
                                 leftSample.m_isCollision = true;
-                                leftCollisionNormal =  direction.Normalized() - lineDir.Normalized();
-                                leftCollisionAngle = acos(direction.Normalized().Dot(lineDir.Normalized()));
+                                leftCollisionNormal =  direction.Normalized() + (-1.0f * lineDir.Normalized());
+                                leftCollisionNormal.Normalized();
+                                leftCollisionAngle = acos(-1.0f*(direction.Normalized().Dot(lineDir.Normalized())));
+                                cout << "Left collision angle: " << leftCollisionAngle << endl;
+
+                                cout << "Line direction: " << lineDir.Normalized() << endl;
+                                cout << "Wave Particle Direction: " << direction.Normalized() << endl;
                                 numCollided++;
                                 break;
                             }
@@ -478,6 +483,7 @@ namespace Farlor
                         if ((distanceNew >= 0.0f && distanceOld < 0.0f) || (distanceNew <= 0.0f && distanceOld > 0.0f))
                         {
                             // Collision with plane happened
+
                             leftSample.m_isCollision = true;
                             numCollided++;
                             break;
@@ -521,7 +527,8 @@ namespace Farlor
                         if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
                         {
                             rightSample.m_isCollision = true;
-                            rightCollisionNormal =  direction.Normalized() - lineDir.Normalized();
+                            rightCollisionNormal =  direction.Normalized() + lineDir.Normalized();
+                            rightCollisionNormal.Normalized();
                             rightCollisionAngle = acos(direction.Normalized().Dot(lineDir.Normalized()));
                             numCollided++;
                             break;
@@ -544,8 +551,8 @@ namespace Farlor
 
                 particleSamples.push_back(rightSample);
 
-                if (numCollided > 0)
-                    cout << "Num collided" << numCollided << " for " << i << endl;
+                // if (numCollided > 0)
+                //     cout << "Num collided" << numCollided << " for " << i << endl;
 
 
                 // If we have a left collision, handle that.
@@ -561,6 +568,14 @@ namespace Farlor
                         newParticleDirection, g_TimerGame.TotalTime());
                     particleLeft.m_dispersionAngle = leftCollisionAngle;
                     particleLeft.m_birthPosition = leftSample.m_newPosition;
+
+                    cout << "New Particle Position: " << leftSample.m_newPosition << endl;
+                    cout << "New Particle Direction: " << newParticleDirection << endl;
+                    cout << "New Particle Angle: " << leftCollisionAngle << endl;
+                    particleLeft.m_birthPosition = leftSample.m_newPosition;
+
+                    // m_waveParticles.clear();
+                    // m_numActualParticles = 1;
 
                     AddParticle(particleLeft);
                 }
@@ -579,7 +594,8 @@ namespace Farlor
                     particleRight.m_dispersionAngle = rightCollisionAngle;
                     particleRight.m_birthPosition = rightSample.m_newPosition;
 
-                    AddParticle(particleRight);
+
+                    // AddParticle(particleRight);
                 }
 
                 // Do subdivide
