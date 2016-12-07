@@ -160,7 +160,7 @@ namespace Farlor
         m_pDeviceContext->RSSetState(m_rasterState);
 
         rasterDesc.m_rasterDesc.CullMode = D3D11_CULL_NONE;
-        rasterDesc.m_rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
+        rasterDesc.m_rasterDesc.FillMode = D3D11_FILL_SOLID;
         result = m_pDevice->CreateRasterizerState(&rasterDesc.m_rasterDesc, &m_rasterStateNoCull);
         if (FAILED(result))
         {
@@ -332,9 +332,9 @@ namespace Farlor
         // Create sampler state
         ZeroMemory(&samplerDesc, sizeof(samplerDesc));
         samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
     	samplerDesc.MipLODBias = 0.0f;
     	samplerDesc.MaxAnisotropy = 1;
     	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
@@ -454,15 +454,83 @@ namespace Farlor
         //
         // m_terrain.UpdateMesh(m_pHeightmapPositions);
 
-        // Render the terrain
-        m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
         m_camView = g_MainCamera.m_camView;
+
+        m_pDeviceContext->ClearRenderTargetView(m_renderTargets["G-Normals"].m_pRTView, clearColor);
+        m_pDeviceContext->ClearRenderTargetView(m_renderTargets["G-Diffuse"].m_pRTView, clearColor);
+        m_pDeviceContext->ClearRenderTargetView(m_renderTargets["G-Specular"].m_pRTView, clearColor);
+        m_pDeviceContext->ClearRenderTargetView(m_renderTargets["G-Position"].m_pRTView, clearColor);
         m_pDeviceContext->ClearDepthStencilView(m_depthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+        m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
+
+
+        m_shaders["GBufferBasePass"].SetPipeline(m_pDeviceContext);
+
+        m_pDeviceContext->PSSetShaderResources(0, 1, &m_pHouseTextureSRV);
+        m_pDeviceContext->PSSetSamplers(0, 1, &m_pSamplerState);
+
+        ID3D11Buffer *pConstantBuffers[2];
+        pConstantBuffers[0] = m_cbTransformsBuffer;
+        pConstantBuffers[1] = m_cbMatPropertiesBuffer;
+
+        m_pDeviceContext->VSSetConstantBuffers(0, 2, pConstantBuffers);
+        m_pDeviceContext->PSSetConstantBuffers(0, 2, pConstantBuffers);
+
+        ID3D11RenderTargetView *deferredRTViews[4];
+        deferredRTViews[0] = m_renderTargets["G-Normals"].m_pRTView;
+        deferredRTViews[1] = m_renderTargets["G-Diffuse"].m_pRTView;
+        deferredRTViews[2] = m_renderTargets["G-Specular"].m_pRTView;
+        deferredRTViews[3] = m_renderTargets["G-Position"].m_pRTView;
+
+        m_pDeviceContext->OMSetRenderTargets(4, deferredRTViews, m_depthStencilView);
+
+        // Render all objects
+        for (auto& renderComponent : m_renderingComponents)
+        {
+            Render(renderComponent);
+        }
+
+        m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, nullptr);
+
+        ID3D11ShaderResourceView *resourceViews[4];
+
+        resourceViews[0] = m_renderTargets["G-Normals"].m_pRTShaderResourceView;
+        resourceViews[1] = m_renderTargets["G-Diffuse"].m_pRTShaderResourceView;
+        resourceViews[2] = m_renderTargets["G-Specular"].m_pRTShaderResourceView;
+        resourceViews[3] = m_renderTargets["G-Position"].m_pRTShaderResourceView;
+
+        m_pDeviceContext->OMSetBlendState(m_pAlphaBlendState, 0, 0xffffffff);
+
+        // Render ambient light
+        m_shaders["GBufferLightAmbient"].SetPipeline(m_pDeviceContext);
+        m_pDeviceContext->PSSetShaderResources(0, 1, & m_renderTargets["G-Diffuse"].m_pRTShaderResourceView);
+
+        // Turn on alpha blending
+        m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        m_pDeviceContext->Draw(3, 0);
+
+
+        m_shaders["GBufferLightPassDirectional"].SetPipeline(m_pDeviceContext);
+        m_pDeviceContext->PSSetShaderResources(0, 4, resourceViews);
+
+        // Render Lights
+        for (auto& lightComponent : m_lightComponents)
+        {
+            RenderLight(lightComponent);
+        }
+
+        m_pDeviceContext->OMSetBlendState(nullptr, 0, 0xffffffff);
+
+
+        // Render the terrain
+        // m_pDeviceContext->ClearDepthStencilView(m_depthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
         m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_depthStencilView);
         // m_pDeviceContext->RSSetState(m_rasterState);
 
         m_pDeviceContext->RSSetState(m_rasterStateNoCull);
         m_terrain.Render(m_pDevice, m_pDeviceContext, m_pWPSRView, m_pWPSampleState);
+
 
         m_pSwapChain->Present(0, 0);
     }

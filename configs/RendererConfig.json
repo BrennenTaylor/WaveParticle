@@ -5,5 +5,34 @@
     },
     "global-resources" :
     [
+        // G-Buffer
+        {
+            "name" : "G-Normals",
+            "type" : "render-target",
+            "width-scale" : 1,
+            "height-scale" : 1,
+            "format" : "R32G32B32A32F"
+        },
+        {
+            "name" : "G-Diffuse",
+            "type" : "render-target",
+            "width-scale" : 1,
+            "height-scale" : 1,
+            "format" : "R32G32B32A32F"
+        },
+        {
+            "name" : "G-Specular",
+            "type" : "render-target",
+            "width-scale" : 1,
+            "height-scale" : 1,
+            "format" : "R32G32B32A32F"
+        },
+        {
+            "name" : "G-Position",
+            "type" : "render-target",
+            "width-scale" : 1,
+            "height-scale" : 1,
+            "format" : "R32G32B32A32F"
+        }
     ]
 }

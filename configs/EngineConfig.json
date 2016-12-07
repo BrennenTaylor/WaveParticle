@@ -3,6 +3,73 @@
     {
         "entities" :
         [
+            // Teapot
+            {
+                "TransformComponent" :
+                {
+                    "position" :
+                    {
+                        "x" : 78.5,
+                        "y" : 0.0,
+                        "z" : 40.0
+                    },
+                    "rotation" :
+                    {
+                        "x" : 0.0,
+                        "y" : 0.0,
+                        "z" : 0.0
+                    },
+                    "scale" :
+                    {
+                        "x" : 21.5,
+                        "y" : 10.0,
+                        "z" : 0.3
+                    }
+                },
+                "ParticlePhysicsComponent" :
+                {
+                    "mass" : 17.0
+                },
+                "RenderingComponent" :
+                {
+                    "mesh" : "Box.obj"
+                    /*"material" : 0*/
+                }
+            },
+            // Light
+            {
+                "TransformComponent" :
+                {
+                    "position" :
+                    {
+                        "x" : 0.0,
+                        "y" : 0.0,
+                        "z" : 0.0
+                    },
+                    "rotation" :
+                    {
+                        "x" : 0.0,
+                        "y" : 0.0,
+                        "z" : 0.0
+                    },
+                    "scale" :
+                    {
+                        "x" : 0.0,
+                        "y" : 0.0,
+                        "z" : 0.0
+                    }
+                },
+                "LightComponent" :
+                {
+                    "color" :
+                    {
+                        "r" : 1.0,
+                        "g" : 1.0,
+                        "b" : 1.0
+                    },
+                    "light-range" : 100.0
+                }
+            }
         ]
     }
 }

@@ -60,7 +60,7 @@ namespace Farlor
     GameWindow m_gameWindow;
 
 
-    ParticleSystem g_WaveParticles{5000};
+    ParticleSystem g_WaveParticles{500};
     Camera g_WaveParticleCamera{false};
 
     const float SCREEN_DEPTH = 1000.0f;
@@ -248,6 +248,8 @@ namespace Farlor
                 component.m_lightRange.y = lightComponentValue["light-range"].asFloat();
                 component.m_lightRange.x = lightComponentValue["light-range"].asFloat();
                 component.m_lightRange.z = lightComponentValue["light-range"].asFloat();
+
+                component.m_direction = Vector3(0.0f, -0.7f, -1.0f);
 
                 g_RenderingSystem.AddComponent(component);
                 FARLOR_LOG_INFO("Loaded lighting component")

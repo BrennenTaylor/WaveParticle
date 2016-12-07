@@ -109,5 +109,4 @@ float4 PSMain(in float4 screenPos : SV_Position) : SV_Target0
     float3 lighting = CalcLighting(normal, position, diffuseAlbedo, specularAlbedo, specularPower);
 
     return float4(lighting, 1.0f);
-
 }

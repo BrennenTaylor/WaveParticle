@@ -24,6 +24,54 @@
             "name" : "RenderHeightmap",
             "hasVS" : true,
             "hasPS" : true
+        },
+        {
+            "filename" : "GBufferBasePass.hlsl",
+            "name" : "GBufferBasePass",
+            "hasVS" : true,
+            "hasPS" : true
+        },
+        {
+            "filename" : "DepthBufferVisualize.hlsl",
+            "name" : "DepthBufferVisualize",
+            "hasVS" : true,
+            "hasPS" : true
+        },
+        {
+            "filename" : "GBufferLightPass.hlsl",
+            "name" : "GBufferLightPassDirectional",
+            "hasVS" : true,
+            "hasPS" : true,
+            "defines" :
+            [
+                "DIRECTIONALLIGHT"
+            ]
+        },
+        {
+            "filename" : "GBufferLightPass.hlsl",
+            "name" : "GBufferLightPassPoint",
+            "hasVS" : true,
+            "hasPS" : true,
+            "defines" :
+            [
+                "POINTLIGHT"
+            ]
+        },
+        {
+            "filename" : "GBufferLightPass.hlsl",
+            "name" : "GBufferLightPassSpotlight",
+            "hasVS" : true,
+            "hasPS" : true,
+            "defines" :
+            [
+                "SPOTLIGHT"
+            ]
+        },
+        {
+            "filename" : "GBufferLightAmbientPass.hlsl",
+            "name" : "GBufferLightAmbient",
+            "hasVS" : true,
+            "hasPS" : true
         }
     ]
 }
