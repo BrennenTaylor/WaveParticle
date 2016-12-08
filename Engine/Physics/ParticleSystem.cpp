@@ -440,7 +440,7 @@ namespace Farlor
                     particleRight.m_birthPosition = rightSample.m_newPosition;
 
 
-                    AddParticle(particleRight);
+                    // AddParticle(particleRight);
                 }
 
                 // Do subdivide
