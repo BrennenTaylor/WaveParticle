@@ -3,6 +3,7 @@ set (ENGINE_SOURCES
 
     ${ENGINE_SOURCES}
 
+    Math/CollisionFunctions.cpp
     Math/FastMatrix.cpp
     Math/FastVector.cpp
     Math/Line.cpp
@@ -18,6 +19,7 @@ set (ENGINE_INCLUDES
 
     ${ENGINE_INCLUDES}
 
+    Math/CollisionFunctions.h
     Math/FastMatrix.h
     Math/FastVector.h
     Math/Line.h

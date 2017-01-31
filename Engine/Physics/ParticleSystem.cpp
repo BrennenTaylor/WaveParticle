@@ -9,6 +9,8 @@
 #include <time.h>
 #include <math.h>
 
+#include "../Math/CollisionFunctions.h"
+
 #include "../Core/Timer.h"
 
 using namespace DirectX;
@@ -74,7 +76,8 @@ namespace Farlor
             Vector3 direction(0.0f, 1.0f, 0.0f);
             direction *= speed;
             WaveParticle newParticle(Vector3(x + (10.0f * i), y, zCoord), direction, (float)g_TimerGame.TotalTime());
-            newParticle.m_dispersionAngle = 0.0f;
+            // We need to figure out how to measure "angle" for  parallel waves. Important for diffraction.
+            newParticle.m_dispersionAngle = 1.0f;
             AddParticle(newParticle);
         }
 
@@ -221,228 +224,81 @@ namespace Farlor
                 }
             }
 
+            // Perform Diffraction
+
+            // Generate triangle representing area that wave particle covers
+            // This is a triangle of the current position + dispersion angle (A, B, C)
+            // in addition to a rectangle (B, C, D) and (B, D, E)
+            float distanceTraveled = Vector3(m_waveParticles[i].m_direction * timeMoved).Magnitude();
+            float dispersionAngle = m_waveParticles[i].m_dispersionAngle;
+            float halfAngle = dispersionAngle / 2.0f;
+            Vector3 direction = m_waveParticles[i].m_direction;
+
+            float xLeft = direction.x * cos(halfAngle) - direction.y * sin(halfAngle);
+            float yLeft = direction.y * cos(halfAngle) + direction.x * sin(halfAngle);
+
+            float xRight = direction.x * cos(-1.0f * halfAngle) - direction.y * sin(-1.0f * halfAngle);
+            float yRight = direction.y * cos(-1.0f * halfAngle) + direction.x * sin(-1.0f * halfAngle);
+            
+            float coveredDistance = 1.0f;
+
+            Vector2 left(xLeft, yLeft);
+            left = left.Normalized() * coveredDistance;
+            Vector2 right(xRight, yRight);
+            right = right.Normalized() * coveredDistance;
+
+            // cout << "Left: " << left << endl;
+            // cout << "Right: " << right << endl;
+
+            // First points of rectangle
+            Vector3 A3D = m_waveParticles[i].m_currentPosition;
+            Vector2 A(A3D.x, A3D.y);
+            Vector2 B = A + left;
+            Vector2 C = B + right;
+
+            // Second points of rectangle
+            Vector3 newPos3D = m_waveParticles[i].m_birthPosition + m_waveParticles[i].m_direction * timeMoved;
+            Vector2 newPos(newPos3D.x, newPos3D.y);
+            Vector2 E = newPos + left;
+            Vector2 D = newPos + right;
+
+            // Check if end points of any obstacles intersect this area. If so, we have a place for diffraction
+            vector<Vector2> m_collisions;
+
+            for (auto& lineSegment : m_collisionSegments)
+            {
+                Vector2 firstEndPoint = Vector2(lineSegment.m_first.x, lineSegment.m_first.y);
+                Vector2 secondEndPoint = Vector2(lineSegment.m_second.x, lineSegment.m_second.y);
+
+                if (PointInTriangle(firstEndPoint, B, C, D))
+                {
+                    cout << "First" << endl;
+                    cout << "Point: " << firstEndPoint << endl;
+                    cout << "B: " << B << endl;
+                    cout << "C: " << C << endl;
+                    cout << "D: " << D << endl;
+                    m_collisions.push_back(firstEndPoint);
+                }
+                
+                if (PointInTriangle(secondEndPoint, B, D, E))
+                {
+                    cout << "Second" << endl;
+                    cout << "Point: " << secondEndPoint << endl;
+                    cout << "B: " << B << endl;
+                    cout << "D: " << D << endl;
+                    cout << "E: " << E << endl;
+                    m_collisions.push_back(secondEndPoint);
+                }
+            }
+
+            if (m_collisions.size() > 0)
+            {
+                cout << "We had a collision" << endl;
+            }
+
+            // Perform subdivide
             if (!collision)
             {
-                vector<Sample> particleSamples;
-
-                // float startAngle = -1.0f * m_waveParticles[i].m_sampleAngle / 2.0f;
-                // float sampleAngleStep = m_waveParticles[i].m_sampleAngle / sampleDensity;
-
-                int numCollided = 0;
-                // for (int j = 0; j < sampleDensity; j++)
-                // {
-                    Sample leftSample;
-                    Sample rightSample;
-
-                    Vector3 leftCollisionNormal;
-                    Vector3 rightCollisionNormal;
-
-                    float leftCollisionAngle;
-                    float rightCollisionAngle;
-
-                    float angle = m_waveParticles[i].m_dispersionAngle;
-
-                    Vector3 direction = m_waveParticles[i].m_direction;
-                    direction = direction.Normalized();
-
-                    Vector3 leftSampleDirection;
-                    leftSampleDirection.x = direction.x * cos(-angle) - direction.y * sin(-angle);
-                    leftSampleDirection.y = direction.x * sin(-angle) + direction.y * cos(-angle);
-                    leftSampleDirection = leftSampleDirection.Normalized();
-
-                    Vector3 rightSampleDirection;
-                    rightSampleDirection.x = direction.x * cos(angle) - direction.y * sin(angle);
-                    rightSampleDirection.y = direction.x * sin(angle) + direction.y * cos(angle);
-                    rightSampleDirection = leftSampleDirection.Normalized();
-
-
-                    leftSample.m_isCollision = false;
-                    rightSample.m_isCollision = false;
-
-                    // This needs to change as we are representing wave particles instead of samples
-                    // Parallel wave
-                    if (angle == 0.0f)
-                    {
-                        leftSample.m_oldPosition = oldPoint - Vector3(-direction.y, direction.x, 0.0f) * 10.0f;
-                        leftSample.m_newPosition = newPoint - Vector3(-direction.y, direction.x, 0.0f) * 10.0f;
-
-                        rightSample.m_oldPosition = oldPoint + Vector3(-direction.y, direction.x, 0.0f) * 10.0f;
-                        rightSample.m_newPosition = newPoint + Vector3(-direction.y, direction.x, 0.0f) * 10.0f;
-                    }
-                    // Non parallel wave
-                    else
-                    {
-                    }
-
-                    Vector3 sampleOldPoint = leftSample.m_oldPosition;
-                    Vector3 sampleNewPoint = leftSample.m_newPosition;
-
-                    // Do collisions
-                    for (auto& lineSegment : m_collisionSegments)
-                    {
-                        Vector3 first = lineSegment.m_first;
-                        Vector3 second = lineSegment.m_second;
-
-                        Vector3 lineDir = second - first;
-                        lineDir = lineDir.Normalized();
-                        Vector3 lineDirNorm = Vector3(-1.0f * lineDir.y, lineDir.x, 0.0f);
-
-                        float distanceOld = (sampleOldPoint - first).Dot(lineDirNorm);
-                        float distanceNew = (sampleNewPoint - first).Dot(lineDirNorm);
-
-                        if ((distanceNew >= 0.0f && distanceOld < 0.0f) || (distanceNew <= 0.0f && distanceOld > 0.0f))
-                        {
-                            float s1_x, s1_y, s2_x, s2_y;
-                            s1_x = sampleNewPoint.x - sampleOldPoint.x;
-                            s1_y = sampleNewPoint.y - sampleOldPoint.y;
-
-                            s2_x = second.x - first.x;
-                            s2_y = second.y - first.y;
-
-                            float s, t;
-                            s = (-s1_y * (sampleOldPoint.x - first.x) + s1_x * (sampleOldPoint.y - first.y)) / (-s2_x * s1_y + s1_x * s2_y);
-                            t = ( s2_x * (sampleOldPoint.y - first.y) - s2_y * (sampleOldPoint.x - first.x)) / (-s2_x * s1_y + s1_x * s2_y);
-
-                            if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
-                            {
-                                leftSample.m_isCollision = true;
-                                leftCollisionNormal =  direction.Normalized() + (-1.0f * lineDir.Normalized());
-                                leftCollisionNormal.Normalized();
-                                leftCollisionAngle = acos(-1.0f*(direction.Normalized().Dot(lineDir.Normalized())));
-                                // cout << "Left collision angle: " << leftCollisionAngle << endl;
-                                //
-                                // cout << "Line direction: " << lineDir.Normalized() << endl;
-                                // cout << "Wave Particle Direction: " << direction.Normalized() << endl;
-                                numCollided++;
-                                break;
-                            }
-                        }
-                    }
-
-                    for (auto& plane : m_collisionPlanes)
-                    {
-                        float distanceOld = (sampleOldPoint - plane.m_point).Dot(plane.m_normal);
-                        float distanceNew = (sampleNewPoint - plane.m_point).Dot(plane.m_normal);
-                        if ((distanceNew >= 0.0f && distanceOld < 0.0f) || (distanceNew <= 0.0f && distanceOld > 0.0f))
-                        {
-                            // Collision with plane happened
-
-                            leftSample.m_isCollision = true;
-                            numCollided++;
-                            break;
-                        }
-                    }
-                    particleSamples.push_back(leftSample);
-                // }
-
-
-
-                // Handle right sample
-                sampleOldPoint = rightSample.m_oldPosition;
-                sampleNewPoint = rightSample.m_newPosition;
-
-                // Do collisions
-                for (auto& lineSegment : m_collisionSegments)
-                {
-                    Vector3 first = lineSegment.m_first;
-                    Vector3 second = lineSegment.m_second;
-
-                    Vector3 lineDir = second - first;
-                    lineDir = lineDir.Normalized();
-                    Vector3 lineDirNorm = Vector3(-1.0f * lineDir.y, lineDir.x, 0.0f);
-
-                    float distanceOld = (sampleOldPoint - first).Dot(lineDirNorm);
-                    float distanceNew = (sampleNewPoint - first).Dot(lineDirNorm);
-
-                    if ((distanceNew >= 0.0f && distanceOld < 0.0f) || (distanceNew <= 0.0f && distanceOld > 0.0f))
-                    {
-                        float s1_x, s1_y, s2_x, s2_y;
-                        s1_x = sampleNewPoint.x - sampleOldPoint.x;
-                        s1_y = sampleNewPoint.y - sampleOldPoint.y;
-
-                        s2_x = second.x - first.x;
-                        s2_y = second.y - first.y;
-
-                        float s, t;
-                        s = (-s1_y * (sampleOldPoint.x - first.x) + s1_x * (sampleOldPoint.y - first.y)) / (-s2_x * s1_y + s1_x * s2_y);
-                        t = ( s2_x * (sampleOldPoint.y - first.y) - s2_y * (sampleOldPoint.x - first.x)) / (-s2_x * s1_y + s1_x * s2_y);
-
-                        if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
-                        {
-                            rightSample.m_isCollision = true;
-                            rightCollisionNormal =  direction.Normalized() + lineDir.Normalized();
-                            rightCollisionNormal.Normalized();
-                            rightCollisionAngle = acos(direction.Normalized().Dot(lineDir.Normalized()));
-                            numCollided++;
-                            break;
-                        }
-                    }
-                }
-
-                for (auto& plane : m_collisionPlanes)
-                {
-                    float distanceOld = (sampleOldPoint - plane.m_point).Dot(plane.m_normal);
-                    float distanceNew = (sampleNewPoint - plane.m_point).Dot(plane.m_normal);
-                    if ((distanceNew >= 0.0f && distanceOld < 0.0f) || (distanceNew <= 0.0f && distanceOld > 0.0f))
-                    {
-                        // Collision with plane happened
-                        rightSample.m_isCollision = true;
-                        numCollided++;
-                        break;
-                    }
-                }
-
-                particleSamples.push_back(rightSample);
-
-                // if (numCollided > 0)
-                //     cout << "Num collided" << numCollided << " for " << i << endl;
-
-
-                // If we have a left collision, handle that.
-                if (leftSample.m_isCollision)
-                {
-                    // cout << "Handling left collision" << endl;
-
-                    // Vector3 newParticleDirection{1.0f, 1.0f, 0.0f};
-                    // newParticleDirection = newParticleDirection.Normalized();
-                    Vector3 newParticleDirection = leftCollisionNormal.Normalized();
-                    newParticleDirection *= speed;
-                    WaveParticle particleLeft = WaveParticle(leftSample.m_newPosition,
-                        newParticleDirection, g_TimerGame.TotalTime());
-                    particleLeft.m_dispersionAngle = leftCollisionAngle;
-                    particleLeft.m_birthPosition = leftSample.m_newPosition;
-                    particleLeft.m_amplitude = 1.0f;
-
-                    cout << "New Particle Position: " << leftSample.m_newPosition << endl;
-                    cout << "New Particle Direction: " << newParticleDirection << endl;
-                    cout << "New Particle Angle: " << leftCollisionAngle << endl;
-                    particleLeft.m_birthPosition = leftSample.m_newPosition;
-
-                    // m_waveParticles.clear();
-                    // m_numActualParticles = 0;
-
-                    cout << "Adding left particle: " << endl;
-                    AddParticle(particleLeft);
-                }
-
-                // If we have a right one, handle that
-                if (rightSample.m_isCollision)
-                {
-                    // cout << "Handling right collision" << endl;
-
-                    // Vector3 newParticleDirection{-1.0f, 1.0f, 0.0f};
-                    // newParticleDirection = newParticleDirection.Normalized();
-                    Vector3 newParticleDirection = rightCollisionNormal.Normalized();
-                    newParticleDirection *= speed;
-                    WaveParticle particleRight = WaveParticle(rightSample.m_newPosition,
-                        newParticleDirection, g_TimerGame.TotalTime());
-                    particleRight.m_dispersionAngle = rightCollisionAngle;
-                    particleRight.m_birthPosition = rightSample.m_newPosition;
-
-
-                    // AddParticle(particleRight);
-                }
-
                 // Do subdivide
                 float angleOwned = m_waveParticles[i].m_dispersionAngle;
                 float halfAngleOwned = angleOwned / 2.0f;
@@ -519,8 +375,6 @@ namespace Farlor
                     m_newParticles.push_back(particleSame);
                     m_newParticles.push_back(particleLeft);
                     m_newParticles.push_back(particleRight);
-
-                    // cout << "Generated particles"
                 }
             }
 
@@ -565,8 +419,8 @@ namespace Farlor
                     m_waveParticles[j].m_dispersionAngle = m_waveParticles[j + 1].m_dispersionAngle;
                     m_waveParticles[j].m_birthTime = m_waveParticles[j + 1].m_birthTime;
                     m_waveParticles[j].m_particleSize = m_waveParticles[j + 1].m_particleSize;
-                    m_waveParticles[j].m_sampleAngle = m_waveParticles[j + 1].m_sampleAngle;
-                    m_waveParticles[j].m_sampleDistance = m_waveParticles[j + 1].m_sampleDistance;
+                    // m_waveParticles[j].m_sampleAngle = m_waveParticles[j + 1].m_sampleAngle;
+                    // m_waveParticles[j].m_sampleDistance = m_waveParticles[j + 1].m_sampleDistance;
                     m_waveParticles[j].m_active = m_waveParticles[j + 1].m_active;
 
                     m_waveParticles[j+1].m_active = false;

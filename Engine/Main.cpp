@@ -21,6 +21,7 @@ using namespace TCLAP;
 int main(int argc, char** argv)
 {
     // TestRandomCrap();
+    
 
     EngineConfig config = {};
 

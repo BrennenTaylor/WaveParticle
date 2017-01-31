@@ -16,8 +16,6 @@ namespace Farlor
         float m_dispersionAngle;
         float m_birthTime;
         float m_particleSize;
-        float m_sampleAngle;
-        float m_sampleDistance;
         bool m_active;
 
         WaveParticle(Vector3 birthPos, Vector3 direction, float birthTime, float size = 20.0f, bool isActive = false);

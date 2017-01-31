@@ -10,8 +10,8 @@ namespace Farlor
         , m_dispersionAngle{TWO_PI/8.0f}
         , m_birthTime(birthTime)
         , m_particleSize(size)
-        , m_sampleAngle(0.523599f)
-        , m_sampleDistance(15.0f)
+        // , m_sampleAngle(0.523599f)
+        // , m_sampleDistance(15.0f)
         , m_active(isActive)
     {
     }
