@@ -13,6 +13,8 @@
 
 #include "../Core/Timer.h"
 
+#include "DiffractionCollisionPacket.h"
+
 using namespace DirectX;
 
 namespace Farlor
@@ -66,47 +68,46 @@ namespace Farlor
     void ParticleSystem::StartRandomWave()
     {
 
-        const int numPoints = 20;
+        const int numPoints = 50;
 
+        // for (int i = 0; i < numPoints; i++)
+        // {
+        //     float x = -120.0f;
+        //     float y = 0;
+
+        //     Vector3 direction(0.0f, 1.0f, 0.0f);
+        //     direction *= speed;
+        //     WaveParticle newParticle(Vector3(x + (10.0f * i), y, zCoord), direction, (float)g_TimerGame.TotalTime());
+        //     // We need to figure out how to measure "angle" for  parallel waves. Important for diffraction.
+        //     newParticle.m_dispersionAngle = 1.0f;
+        //     AddParticle(newParticle);
+        // }
+
+        auto angle = 0.0f;
+        auto deltaTheta = TWO_PI / numPoints;
+        // auto deltaTheta = TWO_PI / 8;
+        
+        auto genIntInRange = [](int min, int max)
+        {
+            return rand() % max + min;
+        };
+        
+        Vector3 startPosition = Vector3(0.0f, 0.0f, zCoord);
+        
         for (int i = 0; i < numPoints; i++)
         {
-            float x = -120.0f;
-            float y = 0;
-
-            Vector3 direction(0.0f, 1.0f, 0.0f);
+            Vector3 planeOrigin = Vector3(0.0f, 0.0f, zCoord);
+            Vector3 direction = Vector3(cos(angle), sin(angle), 0.0f);
+            direction = direction.Normalized();
             direction *= speed;
-            WaveParticle newParticle(Vector3(x + (10.0f * i), y, zCoord), direction, (float)g_TimerGame.TotalTime());
-            // We need to figure out how to measure "angle" for  parallel waves. Important for diffraction.
-            newParticle.m_dispersionAngle = 1.0f;
+            cout << "X: " << direction.x << endl;
+            cout << "Y: " << direction.y << endl;
+            WaveParticle newParticle(startPosition, direction, (float)g_TimerGame.TotalTime());
+            newParticle.m_dispersionAngle = deltaTheta;
             AddParticle(newParticle);
+        
+            angle += deltaTheta;
         }
-
-        // auto angle = 0.0f;
-        // auto deltaTheta = TWO_PI / numPoints;
-        // // auto deltaTheta = TWO_PI / 8;
-        //
-        // auto genIntInRange = [](int min, int max)
-        // {
-        //     return rand() % max + min;
-        // };
-        //
-        // Vector3 startPosition = Vector3(0.0f, 0.0f, zCoord);
-        //
-        // for (int i = 0; i < 1; i++)
-        // // for (int i = 0; i < numPoints; i++)
-        // {
-        //     Vector3 planeOrigin = Vector3(0.0f, 0.0f, zCoord);
-        //     Vector3 direction = Vector3(cos(angle), sin(angle), 0.0f);
-        //     direction = direction.Normalized();
-        //     direction *= speed;
-        //     cout << "X: " << direction.x << endl;
-        //     cout << "Y: " << direction.y << endl;
-        //     WaveParticle newParticle(startPosition, direction, (float)g_TimerGame.TotalTime());
-        //     newParticle.m_dispersionAngle = deltaTheta;
-        //     AddParticle(newParticle);
-        //
-        //     angle += deltaTheta;
-        // }
     }
 
     void ParticleSystem::AddParticle(WaveParticle particle)
@@ -224,76 +225,118 @@ namespace Farlor
                 }
             }
 
-            // Perform Diffraction
 
-            // Generate triangle representing area that wave particle covers
-            // This is a triangle of the current position + dispersion angle (A, B, C)
-            // in addition to a rectangle (B, C, D) and (B, D, E)
-            float distanceTraveled = Vector3(m_waveParticles[i].m_direction * timeMoved).Magnitude();
-            float dispersionAngle = m_waveParticles[i].m_dispersionAngle;
-            float halfAngle = dispersionAngle / 2.0f;
-            Vector3 direction = m_waveParticles[i].m_direction;
-
-            float xLeft = direction.x * cos(halfAngle) - direction.y * sin(halfAngle);
-            float yLeft = direction.y * cos(halfAngle) + direction.x * sin(halfAngle);
-
-            float xRight = direction.x * cos(-1.0f * halfAngle) - direction.y * sin(-1.0f * halfAngle);
-            float yRight = direction.y * cos(-1.0f * halfAngle) + direction.x * sin(-1.0f * halfAngle);
-            
-            float coveredDistance = 1.0f;
-
-            Vector2 left(xLeft, yLeft);
-            left = left.Normalized() * coveredDistance;
-            Vector2 right(xRight, yRight);
-            right = right.Normalized() * coveredDistance;
-
-            // cout << "Left: " << left << endl;
-            // cout << "Right: " << right << endl;
-
-            // First points of rectangle
-            Vector3 A3D = m_waveParticles[i].m_currentPosition;
-            Vector2 A(A3D.x, A3D.y);
-            Vector2 B = A + left;
-            Vector2 C = B + right;
-
-            // Second points of rectangle
-            Vector3 newPos3D = m_waveParticles[i].m_birthPosition + m_waveParticles[i].m_direction * timeMoved;
-            Vector2 newPos(newPos3D.x, newPos3D.y);
-            Vector2 E = newPos + left;
-            Vector2 D = newPos + right;
-
-            // Check if end points of any obstacles intersect this area. If so, we have a place for diffraction
-            vector<Vector2> m_collisions;
-
-            for (auto& lineSegment : m_collisionSegments)
+            // Perform Diffraction Test
+            if (!collision)
             {
-                Vector2 firstEndPoint = Vector2(lineSegment.m_first.x, lineSegment.m_first.y);
-                Vector2 secondEndPoint = Vector2(lineSegment.m_second.x, lineSegment.m_second.y);
-
-                if (PointInTriangle(firstEndPoint, B, C, D))
-                {
-                    cout << "First" << endl;
-                    cout << "Point: " << firstEndPoint << endl;
-                    cout << "B: " << B << endl;
-                    cout << "C: " << C << endl;
-                    cout << "D: " << D << endl;
-                    m_collisions.push_back(firstEndPoint);
-                }
+                // Generate triangle representing area that wave particle covers
                 
-                if (PointInTriangle(secondEndPoint, B, D, E))
-                {
-                    cout << "Second" << endl;
-                    cout << "Point: " << secondEndPoint << endl;
-                    cout << "B: " << B << endl;
-                    cout << "D: " << D << endl;
-                    cout << "E: " << E << endl;
-                    m_collisions.push_back(secondEndPoint);
-                }
-            }
+                // We want left and right of the current m_position
+                // Then we want left and right of the new position
 
-            if (m_collisions.size() > 0)
-            {
-                cout << "We had a collision" << endl;
+                Vector3 direction = m_waveParticles[i].m_direction;
+                Vector3 birthPoint = m_waveParticles[i].m_birthPosition;
+                float dispersionAngle = m_waveParticles[i].m_dispersionAngle;
+                float halfAngle = dispersionAngle / 2.0f;
+
+                Vector3 perpendicularDir = Vector3(-direction.y, direction.x, direction.z);
+                perpendicularDir = perpendicularDir.Normalized();
+
+                // Distance traveled
+                float oldDistTraveled = Vector3(oldPoint - birthPoint).Magnitude();
+                float newDistTraveled = Vector3(newPoint - birthPoint).Magnitude();
+
+                // Perpendicular Directions
+                Vector3 oldPerpDir = Vector3(perpendicularDir * oldDistTraveled) * tan(halfAngle);
+                Vector3 newPerpDir = Vector3(perpendicularDir * newDistTraveled) * tan(halfAngle);
+
+                // Calculate left and rights
+                Vector3 oldLeft = oldPoint + oldPerpDir;
+                Vector3 oldRight = oldPoint - oldPerpDir;
+
+                Vector3 newLeft = newPoint + newPerpDir;
+                Vector3 newRight = newPoint - newPerpDir;
+
+                Vector2 B = Vector2(oldLeft.x, oldLeft.y);
+                Vector2 C = Vector2(oldRight.x, oldRight.y);
+
+                // Second points of rectangle
+                Vector2 E = Vector2(newLeft.x, newLeft.y);
+                Vector2 D = Vector2(newRight.x, newRight.y);
+
+                // Check if end points of any obstacles intersect this area. If so, we have a place for diffraction
+                vector<DiffractionCollisionPacket> m_diffractionCollisionPackets;
+
+                // Need particle dir
+                Vector2 particleDir = Vector2(direction.x, direction.y);
+                particleDir = particleDir.Normalized();
+
+                for (auto& lineSegment : m_collisionSegments)
+                {
+                    Vector2 firstEndPoint = Vector2(lineSegment.m_first.x, lineSegment.m_first.y);
+                    Vector2 secondEndPoint = Vector2(lineSegment.m_second.x, lineSegment.m_second.y);
+
+                    if (PointInTriangle(firstEndPoint, B, C, D))
+                    {
+                        cout << "First" << endl;
+                        cout << "Point: " << firstEndPoint << endl;
+                        cout << "B: " << B << endl;
+                        cout << "C: " << C << endl;
+                        cout << "D: " << D << endl;
+                        Vector2 lineDir = secondEndPoint - firstEndPoint;
+                        lineDir = lineDir.Normalized();
+                        m_diffractionCollisionPackets.push_back(DiffractionCollisionPacket(firstEndPoint, lineDir, particleDir));
+                    }
+                    
+                    if (PointInTriangle(secondEndPoint, B, D, E))
+                    {
+                        cout << "Second" << endl;
+                        cout << "Point: " << secondEndPoint << endl;
+                        cout << "B: " << B << endl;
+                        cout << "D: " << D << endl;
+                        cout << "E: " << E << endl;
+                        Vector2 lineDir = firstEndPoint - secondEndPoint;
+                        lineDir = lineDir.Normalized();
+                        m_diffractionCollisionPackets.push_back(DiffractionCollisionPacket(secondEndPoint, lineDir, particleDir));
+                    }
+                }
+
+                if (m_diffractionCollisionPackets.size() > 0)
+                {
+                    cout << "We had a collisions" << endl;
+
+                    for (auto itr = m_diffractionCollisionPackets.begin(); itr != m_diffractionCollisionPackets.end(); ++itr)
+                    {
+                        cout << "Collision with obstacle end point: " << itr->m_endPoint << endl;
+                        cout << "Obstacle direction: " << itr->m_obstacleDir << endl;
+                        cout << "ParticleDir: " << itr->m_particleDir << endl;
+
+                        // We need to spawn a new particle for this collision
+                        // First, lets identify the dispersion angle
+                        float diffractionDispersionAngle = acos(itr->m_obstacleDir.Dot(itr->m_particleDir));
+                        cout << "New dispersion angle: " << diffractionDispersionAngle << endl;
+
+                        // float tempAngle = DEGREE_TO_RAD(130);
+                        // if (diffractionDispersionAngle >= tempAngle)
+                        // {
+                        //     continue;
+                        // }
+
+                        Vector2 dispersionParticleDir = itr->m_obstacleDir + itr->m_particleDir;
+                        dispersionParticleDir = dispersionParticleDir.Normalized();
+
+                        float offset = 0.01f;
+                        Vector2 diffractionPos = itr->m_endPoint + (dispersionParticleDir * offset);
+
+                        dispersionParticleDir *= speed;
+
+                        WaveParticle diffractionParticle = WaveParticle(Vector3(diffractionPos.x, diffractionPos.y, 10), Vector3(dispersionParticleDir.x, dispersionParticleDir.y, 0.0f),
+                            (float)g_TimerGame.TotalTime());
+                        diffractionParticle.m_dispersionAngle = diffractionDispersionAngle;
+                        // AddParticle(diffractionParticle);
+                        m_newParticles.push_back(diffractionParticle);
+                    }
+                }
             }
 
             // Perform subdivide
@@ -405,7 +448,7 @@ namespace Farlor
         {
             if (m_waveParticles[i].m_active && m_waveParticles[i].m_amplitude <= 0.05f)
             {
-                cout << "Killing particle" << endl;
+                // cout << "Killing particle" << endl;
                 m_waveParticles[i].m_active = false;
 
                 // cout << "Killing Particle" << endl;

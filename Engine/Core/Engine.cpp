@@ -60,7 +60,7 @@ namespace Farlor
     GameWindow m_gameWindow;
 
 
-    ParticleSystem g_WaveParticles{500};
+    ParticleSystem g_WaveParticles{5000};
     Camera g_WaveParticleCamera{false};
 
     const float SCREEN_DEPTH = 1000.0f;
@@ -76,8 +76,8 @@ namespace Farlor
 
         // g_WaveParticles.AddPlane(Plane(-1.0f, 0.0f, 0.0f, 140.0, 0.0, 0.0));
         // g_WaveParticles.AddPlane(Plane(1.0f, 0.0f, 0.0f, -140.0, 0.0, 0.0));
-        g_WaveParticles.AddPlane(Plane(0.0f, -1.0f, 0.0f, 0.0, 140.0, 0.0));
-        g_WaveParticles.AddPlane(Plane(0.0f, 1.0f, 0.0f, 0.0, -140.0, 0.0));
+        g_WaveParticles.AddPlane(Plane(0.0f, -1.0f, 0.0f, 0.0, 170.0, 0.0));
+        g_WaveParticles.AddPlane(Plane(0.0f, 1.0f, 0.0f, 0.0, -170.0, 0.0));
         // g_WaveParticles.AddSegments(LineSegment(-50.0f, 0.0f, -20.0f, 50.0f));
         // g_WaveParticles.AddSegments(LineSegment(30.0f, 50.0f, 50.0f, 50.0f));
         // g_WaveParticles.AddSegments(LineSegment(0.0f, 170.0f, 0.0f, 30.0f));
