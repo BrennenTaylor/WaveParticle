@@ -58,7 +58,7 @@ int main(int argc, char** argv)
     Engine GameEngine = Engine::Instatnce();
 
     // FARLOR_LOG_STARTUP_STDOUT()
-    FARLOR_LOG_STARTUP_SIMPLE_FILE("C:/Log/Farlor.txt")
+    FARLOR_LOG_STARTUP_SIMPLE_FILE("C:/Log/WaveParticle.txt")
 
     FARLOR_LOG_INFO("Info")
     FARLOR_LOG_WARNING("Warning")

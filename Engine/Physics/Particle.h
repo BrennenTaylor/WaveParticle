@@ -11,9 +11,12 @@ namespace Farlor
     {
         Vector3 m_birthPosition;
         Vector3 m_currentPosition;
+
         Vector3 m_direction;
+        
         float m_amplitude;
         float m_dispersionAngle;
+        
         float m_birthTime;
         float m_particleSize;
         bool m_active;

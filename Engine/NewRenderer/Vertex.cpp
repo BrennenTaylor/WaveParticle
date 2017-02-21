@@ -57,6 +57,35 @@ namespace Farlor
         return (Vector3)m_position == (Vector3)other.m_position && (Vector3)m_normal == (Vector3)other.m_normal && (Vector2)m_uv == (Vector2)other.m_uv;
     }
 
+    //  Wave Particle Vertex
+    D3D11_INPUT_ELEMENT_DESC WaveParticleVertex::s_layout[] =
+    {
+        {
+            "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0
+        },
+        {
+            "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0
+        },
+        {
+            "AMPLITUDE", 0, DXGI_FORMAT_R32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0
+        },
+    };
+
+    u32 WaveParticleVertex::s_numElements = 3;
+
+    WaveParticleVertex::WaveParticleVertex()
+        : m_position{0.0f, 0.0f, 0.0f}
+        , m_uv{0.0f, 0.0f}
+        , m_amplitude{1.0f}
+    {
+    }
+
+    WaveParticleVertex::WaveParticleVertex(float x, float y, float z, float u, float v, float amplitude)
+        : m_position{x, y, z}
+        , m_uv{u, v}
+        , m_amplitude{amplitude}
+    {
+    }
 
     //  Vertex Position UV
     D3D11_INPUT_ELEMENT_DESC VertexPositionUV::s_layout[] =

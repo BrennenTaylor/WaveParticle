@@ -27,7 +27,7 @@ PS_INPUT VSMain(VS_INPUT input)
 	PS_INPUT output;
     float3 newPos = input.position;
     float3 readSample = MainTexture.SampleLevel(MainTextureSamplerState, input.uv, 0).xyz;
-    newPos.y = readSample.x * 5;
+    newPos.y = readSample.y * 5;
 
 	float small = 1.0f/500.0f;
 
@@ -43,10 +43,10 @@ PS_INPUT VSMain(VS_INPUT input)
 	float3 topCol = MainTexture.SampleLevel(MainTextureSamplerState, topUV, 0).xyz;
     float3 bottomCol = MainTexture.SampleLevel(MainTextureSamplerState, bottomUV, 0).xyz;
 
-	float3 left = float3(leftUV.x * 100, leftCol.x*5, leftUV.y * 100);
-	float3 right = float3(rightUV.x * 100, rightCol.x*5, rightUV.y * 100);
-	float3 top = float3(topUV.x * 100, topCol.x*5, topUV.y * 100);
-	float3 bottom = float3(bottomUV.x * 100, bottomCol.x*5, bottomUV.y * 100);
+	float3 left = float3(leftUV.x * 100, leftCol.y * 5, leftUV.y * 100);
+	float3 right = float3(rightUV.x * 100, rightCol.y *5, rightUV.y * 100);
+	float3 top = float3(topUV.x * 100, topCol.y*5, topUV.y * 100);
+	float3 bottom = float3(bottomUV.x * 100, bottomCol.y*5, bottomUV.y * 100);
 
 	float3 xNorm =  right - left;
 	float3 zNorm =  bottom - top;

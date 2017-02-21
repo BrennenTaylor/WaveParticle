@@ -16,4 +16,20 @@ namespace Farlor
 
         return ((b1 == b2) && (b2 == b3));
     }
+
+    float DistancePointToLine(Vector2 start, Vector2 end, Vector2 p)
+    {
+        float squareLength = Vector2(start - end).SqrMagnitude();
+
+        if (squareLength == 0)
+            return abs(Vector2(p - start).Magnitude());
+
+            float t = fmax(0.0f,
+                         fmin(1.0f,
+                             (p-start).Dot(Vector2(end - start)) / squareLength
+                            )
+                        );
+            Vector2 projection = start + t * (end - start);
+            return Vector2(p - projection).Magnitude();
+    }
 }

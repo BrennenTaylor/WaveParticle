@@ -7,13 +7,14 @@ struct VS_INPUT
 {
     float3 position : POSITION;
     float2 uv : TEXCOORD;
+    float amplitude : AMPLITUDE;
 };
-
 
 struct PS_INPUT
 {
 	float4 position : SV_POSITION;
 	float2 uv : TEXCOORD;
+    float amplitude : AMPLITUDE;
 };
 
 Texture2D MainTexture;
@@ -24,6 +25,7 @@ PS_INPUT VSMain(VS_INPUT input)
 	PS_INPUT output;
 	output.position = mul(float4(input.position, 1.0f), WVP);
 	output.uv = input.uv;
+    output.amplitude = input.amplitude;
 	return output;
 }
 
@@ -36,7 +38,8 @@ float4 PSMain(PS_INPUT input) : SV_TARGET
     {
         alpha = 0.0;
     }
-    float4 color = float4(1.0f, 1.0f, 1.0f, alpha);
+    // float4 color = float4(1.0f, input.amplitude, 1.0f, alpha);
+    float4 color = float4(1.0f, input.amplitude, 1.0f, alpha);
     //if (color.r == 0.0f)
     //{
     //    color.a = 0.0f;

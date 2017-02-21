@@ -28,6 +28,19 @@ namespace Farlor
         VertexPositionUV(float x, float y, float z, float u, float v);
     };
 
+    struct WaveParticleVertex
+    {
+        static D3D11_INPUT_ELEMENT_DESC s_layout[];
+        static u32 s_numElements;
+
+        Vector3 m_position;
+        Vector2 m_uv;
+        float m_amplitude;
+
+        WaveParticleVertex();
+        WaveParticleVertex(float x, float y, float z, float u, float v, float amplitude);
+    };
+
     struct VertexPositionUVNormal
     {
         static D3D11_INPUT_ELEMENT_DESC s_layout[];

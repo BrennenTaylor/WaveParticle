@@ -54,7 +54,7 @@ namespace Farlor
         int m_vertexCount;
         int m_indexCount;
 
-        VertexPositionUV* m_vertices;
+        WaveParticleVertex* m_vertices;
         unsigned int* m_indices;
         ID3D11Buffer* m_vertexBuffer;
         ID3D11Buffer* m_indexBuffer;
