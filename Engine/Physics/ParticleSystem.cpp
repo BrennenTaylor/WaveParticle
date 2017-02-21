@@ -761,6 +761,11 @@ namespace Farlor
             float particleSize = m_waveParticles[i].m_particleSize;
             float waveFrontSize = 20.0f;
 
+            // Angle between two 2d vectors
+            Vector2 originDir{0.0f, 0.0f};
+            Vector2 particleDir{m_waveParticles[i].m_direction.x, m_waveParticles[i].m_direction.y};
+            float angle = acos(originDir.Dot(particleDir));
+
             // Bottom Left
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x - particleSize;
             m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y - waveFrontSize;
@@ -768,6 +773,8 @@ namespace Farlor
             m_vertices[index].m_uv.x = 0.0f;
             m_vertices[index].m_uv.y = 1.0f;
             m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
+            m_vertices[index].m_angle = angle;
+            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
             index++;
             // Top Left
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x - particleSize;
@@ -776,6 +783,8 @@ namespace Farlor
             m_vertices[index].m_uv.x = 0.0f;
             m_vertices[index].m_uv.y = 0.0f;
             m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
+            m_vertices[index].m_angle = angle;
+            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
             index++;
             // Bottom Right
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x + particleSize;
@@ -784,6 +793,8 @@ namespace Farlor
             m_vertices[index].m_uv.x = 1.0f;
             m_vertices[index].m_uv.y = 1.0f;
             m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
+            m_vertices[index].m_angle = angle;
+            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
             index++;
             // Bottom Right
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x + particleSize;
@@ -792,6 +803,8 @@ namespace Farlor
             m_vertices[index].m_uv.x = 1.0f;
             m_vertices[index].m_uv.y = 1.0f;
             m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
+            m_vertices[index].m_angle = angle;
+            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
             index++;
             // Top Left
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x - particleSize;
@@ -800,6 +813,8 @@ namespace Farlor
             m_vertices[index].m_uv.x = 0.0f;
             m_vertices[index].m_uv.y = 0.0f;
             m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
+            m_vertices[index].m_angle = angle;
+            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
             index++;
             // Top Right
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x + particleSize;
@@ -808,6 +823,8 @@ namespace Farlor
             m_vertices[index].m_uv.x = 1.0f;
             m_vertices[index].m_uv.y = 0.0f;
             m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
+            m_vertices[index].m_angle = angle;
+            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
             index++;
         }
 

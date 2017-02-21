@@ -8,7 +8,8 @@ struct VS_INPUT
     float3 position : POSITION;
     float2 uv : TEXCOORD;
     float amplitude : AMPLITUDE;
-    float radius : RADIUS;
+    float angle : ANGLE;
+    float3 origin : ORIGIN;
 };
 
 struct PS_INPUT
@@ -16,7 +17,7 @@ struct PS_INPUT
 	float4 position : SV_POSITION;
 	float2 uv : TEXCOORD;
     float amplitude : AMPLITUDE;
-    float radius : RADIUS;
+    float angle : ANGLE;
 };
 
 Texture2D MainTexture;
@@ -25,10 +26,49 @@ SamplerState MainTextureSamplerState;
 PS_INPUT VSMain(VS_INPUT input)
 {
 	PS_INPUT output;
-	output.position = mul(float4(input.position, 1.0f), WVP);
+
+    float4x4 transformToOrigin = 
+    {
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        -input.origin.x, -input.origin.y, -input.origin.z, 1.0
+    };
+
+    // y
+    // float4x4 directionRotation =
+    // {
+    //     cos(input.angle), 0.0, sin(input.angle), 0.0,
+    //     0.0, 1.0, 0.0, 0.0,
+    //     -sin(input.angle), 0.0, cos(input.angle), 0.0,
+    //     0.0, 0.0, 0.0, 1.0
+    // };
+
+    // z
+    float4x4 directionRotation =
+    {
+        cos(input.angle), -sin(input.angle), 0.0, 0.0,
+        sin(input.angle), cos(input.angle), 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+    
+    // float4x4 transformFromOrigin = 
+    // {
+    //     1.0, 0.0, 0.0, input.origin.x,
+    //     0.0, 1.0, 0.0, input.origin.y,
+    //     0.0, 0.0, 1.0, input.origin.z,
+    //     0.0, 0.0, 0.0, 1.0
+    // };
+
+    float4x4 finalRot =   directionRotation;
+
+    float4 temp = mul(float4(input.position, 1.0), finalRot);
+
+	output.position = mul(temp, WVP);
 	output.uv = input.uv;
     output.amplitude = input.amplitude;
-    output.radius = input.radius;
+    output.angle = input.angle;
 	return output;
 }
 
