@@ -69,21 +69,26 @@ namespace Farlor
         {
             "AMPLITUDE", 0, DXGI_FORMAT_R32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0
         },
+        {
+            "RADIUS", 0, DXGI_FORMAT_R32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0
+        },
     };
 
-    u32 WaveParticleVertex::s_numElements = 3;
+    u32 WaveParticleVertex::s_numElements = 4;
 
     WaveParticleVertex::WaveParticleVertex()
         : m_position{0.0f, 0.0f, 0.0f}
         , m_uv{0.0f, 0.0f}
         , m_amplitude{1.0f}
+        , m_radius{1.0f}
     {
     }
 
-    WaveParticleVertex::WaveParticleVertex(float x, float y, float z, float u, float v, float amplitude)
+    WaveParticleVertex::WaveParticleVertex(float x, float y, float z, float u, float v, float amplitude, float radius)
         : m_position{x, y, z}
         , m_uv{u, v}
         , m_amplitude{amplitude}
+        , m_radius{radius}
     {
     }
 

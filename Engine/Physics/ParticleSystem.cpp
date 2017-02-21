@@ -748,10 +748,10 @@ namespace Farlor
     {
         HRESULT result;
         D3D11_MAPPED_SUBRESOURCE mappedVertices = {0};
-        VertexPositionUV* verticesPtr;
+        WaveParticleVertex* verticesPtr;
 
         // Reset array of vertices
-        memset(m_vertices, 0, sizeof(VertexPositionUV) * m_vertexCount);
+        memset(m_vertices, 0, sizeof(WaveParticleVertex) * m_vertexCount);
 
         // Now build vertex array from particle list array
         // Each particle becomes a quad made out of two triangles
@@ -759,10 +759,11 @@ namespace Farlor
         for (int i = 0; i < m_numActualParticles; i++)
         {
             float particleSize = m_waveParticles[i].m_particleSize;
+            float waveFrontSize = 20.0f;
 
             // Bottom Left
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x - particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y - particleSize;
+            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y - waveFrontSize;
             m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
             m_vertices[index].m_uv.x = 0.0f;
             m_vertices[index].m_uv.y = 1.0f;
@@ -770,7 +771,7 @@ namespace Farlor
             index++;
             // Top Left
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x - particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y + particleSize;
+            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y + waveFrontSize;
             m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
             m_vertices[index].m_uv.x = 0.0f;
             m_vertices[index].m_uv.y = 0.0f;
@@ -778,7 +779,7 @@ namespace Farlor
             index++;
             // Bottom Right
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x + particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y - particleSize;
+            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y - waveFrontSize;
             m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
             m_vertices[index].m_uv.x = 1.0f;
             m_vertices[index].m_uv.y = 1.0f;
@@ -786,7 +787,7 @@ namespace Farlor
             index++;
             // Bottom Right
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x + particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y - particleSize;
+            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y - waveFrontSize;
             m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
             m_vertices[index].m_uv.x = 1.0f;
             m_vertices[index].m_uv.y = 1.0f;
@@ -794,7 +795,7 @@ namespace Farlor
             index++;
             // Top Left
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x - particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y + particleSize;
+            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y + waveFrontSize;
             m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
             m_vertices[index].m_uv.x = 0.0f;
             m_vertices[index].m_uv.y = 0.0f;
@@ -802,7 +803,7 @@ namespace Farlor
             index++;
             // Top Right
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x + particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y + particleSize;
+            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y + waveFrontSize;
             m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
             m_vertices[index].m_uv.x = 1.0f;
             m_vertices[index].m_uv.y = 0.0f;
@@ -819,9 +820,9 @@ namespace Farlor
         }
 
         // Get pointer to data in vertex buffer
-        verticesPtr = (VertexPositionUV*)mappedVertices.pData;
+        verticesPtr = (WaveParticleVertex*)mappedVertices.pData;
 
-        memcpy(verticesPtr, (void*)m_vertices, sizeof(VertexPositionUV)*m_vertexCount);
+        memcpy(verticesPtr, (void*)m_vertices, sizeof(WaveParticleVertex)*m_vertexCount);
         // Unlock buffer
         pDeviceContext->Unmap(m_vertexBuffer, 0);
     }

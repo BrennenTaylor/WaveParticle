@@ -21,7 +21,7 @@ namespace Farlor
         float m_particleSize;
         bool m_active;
 
-        WaveParticle(Vector3 birthPos, Vector3 direction, float birthTime, float size = 20.0f, bool isActive = false);
+        WaveParticle(Vector3 birthPos, Vector3 direction, float birthTime, float size = 10.0f, bool isActive = false);
 
         bool ShouldKill();
     };

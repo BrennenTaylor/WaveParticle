@@ -8,6 +8,7 @@ struct VS_INPUT
     float3 position : POSITION;
     float2 uv : TEXCOORD;
     float amplitude : AMPLITUDE;
+    float radius : RADIUS;
 };
 
 struct PS_INPUT
@@ -15,6 +16,7 @@ struct PS_INPUT
 	float4 position : SV_POSITION;
 	float2 uv : TEXCOORD;
     float amplitude : AMPLITUDE;
+    float radius : RADIUS;
 };
 
 Texture2D MainTexture;
@@ -26,6 +28,7 @@ PS_INPUT VSMain(VS_INPUT input)
 	output.position = mul(float4(input.position, 1.0f), WVP);
 	output.uv = input.uv;
     output.amplitude = input.amplitude;
+    output.radius = input.radius;
 	return output;
 }
 
