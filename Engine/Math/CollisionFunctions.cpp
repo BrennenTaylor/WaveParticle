@@ -32,4 +32,11 @@ namespace Farlor
             Vector2 projection = start + t * (end - start);
             return Vector2(p - projection).Magnitude();
     }
+
+    float TriangleArea(Vector2 a, Vector2 b, Vector2 c)
+    {
+        float area = 0.0f;
+        area = 0.5f * abs((a.x - c.x)*(b.y - a.y) - (a.x - b.x)*(c.y-a.y));
+        return area;
+    }
 }

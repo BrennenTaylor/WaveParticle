@@ -8,4 +8,6 @@ namespace Farlor
     bool PointInTriangle(Vector2 p, Vector2 a, Vector2 b, Vector2 c);
 
     float DistancePointToLine(Vector2 start, Vector2 end, Vector2 p);
+
+    float TriangleArea(Vector2 a, Vector2 b, Vector2 c);
 }

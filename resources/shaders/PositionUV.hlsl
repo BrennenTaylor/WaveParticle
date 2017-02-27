@@ -47,23 +47,23 @@ PS_INPUT VSMain(VS_INPUT input)
     // z
     float4x4 directionRotation =
     {
-        cos(input.angle), -sin(input.angle), 0.0, 0.0,
-        sin(input.angle), cos(input.angle), 0.0, 0.0,
+        cos(-input.angle), sin(-input.angle), 0.0, 0.0,
+        -sin(-input.angle), cos(-input.angle), 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     };
     
-    // float4x4 transformFromOrigin = 
-    // {
-    //     1.0, 0.0, 0.0, input.origin.x,
-    //     0.0, 1.0, 0.0, input.origin.y,
-    //     0.0, 0.0, 1.0, input.origin.z,
-    //     0.0, 0.0, 0.0, 1.0
-    // };
+    float4x4 transformFromOrigin = 
+    {
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        input.origin.x, input.origin.y, input.origin.z, 1.0
+    };
 
-    float4x4 finalRot =   directionRotation;
-
-    float4 temp = mul(float4(input.position, 1.0), finalRot);
+    float4 temp = mul(float4(input.position, 1.0), transformToOrigin);
+    temp = mul(temp, directionRotation);
+    temp = mul(temp, transformFromOrigin);
 
 	output.position = mul(temp, WVP);
 	output.uv = input.uv;
