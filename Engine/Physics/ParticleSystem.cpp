@@ -86,11 +86,13 @@ namespace Farlor
         //     AddParticle(newParticle);
         // }
 
-        const int numPoints = 3;
+        const int numPoints = 16;
 
         auto angle = 0.0f;
         auto deltaTheta = TWO_PI / numPoints;
-        // auto deltaTheta = TWO_PI / 8;
+        // auto deltaTheta = TWO_PI / 16;
+
+        angle += 2*deltaTheta;
         
         auto genIntInRange = [](int min, int max)
         {
@@ -105,10 +107,13 @@ namespace Farlor
             Vector3 direction = Vector3(cos(angle), sin(angle), 0.0f);
             direction = direction.Normalized();
             direction *= speed;
-            WaveParticle newParticle(startPosition, direction, (float)g_TimerGame.TotalTime(), 10.f);
+            WaveParticle newParticle(startPosition, direction, (float)g_TimerGame.TotalTime(), 20.f);
             newParticle.m_dispersionAngle = deltaTheta;
             AddParticle(newParticle);
         
+            cout << "Particle direction: " << direction.Normalized() << endl;
+            cout << "Dispersion angle: " << deltaTheta << endl;
+
             angle += deltaTheta;
         }
     }
@@ -161,6 +166,7 @@ namespace Farlor
                 Vector2 newPoint2d = Vector2(newPoint.x, newPoint.y);
 
                 Vector3 direction = m_waveParticles[i].m_direction;
+                direction = direction.Normalized();
                 Vector2 direction2d = Vector2(direction.x, direction.y);
                 direction2d = direction2d.Normalized();
 
@@ -262,7 +268,10 @@ namespace Farlor
 
                         if (endpointCollision)
                         {
-                            Vector2 endpointDir = firstEndPoint - Vector2(birthPoint.x, birthPoint.y);
+                            cout << "OldPoint2d: " << oldPoint2d << endl;
+                            cout << "NewPoint2d: " << newPoint2d << endl;
+
+                            Vector2 endpointDir = secondEndPoint - Vector2(birthPoint.x, birthPoint.y);
                             endpointDir = endpointDir.Normalized();
                             cout << "Endpoint dir: " <<  endpointDir << endl;
                             cout << "Dir2D: " <<  direction2d << endl;
@@ -278,44 +287,49 @@ namespace Farlor
                             cout << "Angle2: " << angle2 << endl;
                             cout << "Tot angle: " << angle1+angle2 << endl;
 
+                            float halfAngle1 = angle1 / 2.0f;
+                            float halfAngle2 = angle2 / 2.0f;
+
+                            cout << "Half Angle 1: " << halfAngle1 << endl;
+                            cout << "Half Angle 2: " << halfAngle2 << endl;
+
+                            Vector2 part1Dir(endpointDir.x*cos(halfAngle1) - endpointDir.y*sin(halfAngle1),
+                                endpointDir.x*sin(halfAngle1) + endpointDir.y*cos(halfAngle1));
+                            part1Dir = part1Dir.Normalized();
+                            
+                            Vector2 part2Dir(endpointDir.x*cos(-1.0f*halfAngle2) - endpointDir.y*sin(-1.0f*halfAngle2),
+                                endpointDir.x*sin(-1.0f*halfAngle2) + endpointDir.y*cos(-1.0f*halfAngle2));
+                            part2Dir = part2Dir.Normalized();
+
+                            cout << "Part1Dir: " << part1Dir.Normalized() << endl;
+                            cout << "Part2Dir: " << part2Dir.Normalized() << endl;
+
+                            float part1Size = abs(angle1/dispersionAngle)*m_waveParticles[i].m_particleSize;
+                            float part2Size = abs(angle2/dispersionAngle)*m_waveParticles[i].m_particleSize;
+
+                            WaveParticle part1 = m_waveParticles[i];
+                            WaveParticle part2 = m_waveParticles[i];
+                            
+                            part1.m_direction = Vector3(part1Dir.x, part1Dir.y, 0.0f) * speed;
+                            part2.m_direction = Vector3(part2Dir.x, part2Dir.y, 0.0f) * speed;
+
+                            part1.m_particleSize = part1Size;
+                            part2.m_particleSize = part2Size;
+
+                            part1.m_currentPosition = part1.m_birthPosition + part1.m_direction * timeMoved;
+                            part2.m_currentPosition = part2.m_birthPosition + part2.m_direction * timeMoved;
+
+                            part1.m_dispersionAngle = angle1;
+                            part2.m_dispersionAngle = angle2;
+
+                            m_waveParticles[i].m_amplitude = 0.0f;
+                            KillParticles();
+
+                            AddParticle(part1);
+                            AddParticle(part2);
+
                             i = 0;
-                        }
-                    }
-
-                    if (m_diffractionCollisionPackets.size() > 0)
-                    {
-                        cout << "We had a collisions" << endl;
-
-                        for (auto itr = m_diffractionCollisionPackets.begin(); itr != m_diffractionCollisionPackets.end(); ++itr)
-                        {
-                            cout << "Collision with obstacle end point: " << itr->m_endPoint << endl;
-                            cout << "Obstacle direction: " << itr->m_obstacleDir << endl;
-                            cout << "ParticleDir: " << itr->m_particleDir << endl;
-
-                            // We need to spawn a new particle for this collision
-                            // First, lets identify the dispersion angle
-                            float diffractionDispersionAngle = acos(itr->m_obstacleDir.Dot(itr->m_particleDir));
-                            cout << "New dispersion angle: " << diffractionDispersionAngle << endl;
-
-                            // float tempAngle = DEGREE_TO_RAD(130);
-                            // if (diffractionDispersionAngle >= tempAngle)
-                            // {
-                            //     continue;
-                            // }
-
-                            Vector2 dispersionParticleDir = itr->m_obstacleDir + itr->m_particleDir;
-                            dispersionParticleDir = dispersionParticleDir.Normalized();
-
-                            float offset = 0.01f;
-                            Vector2 diffractionPos = itr->m_endPoint + (dispersionParticleDir * offset);
-
-                            dispersionParticleDir *= speed;
-
-                            WaveParticle diffractionParticle = WaveParticle(Vector3(diffractionPos.x, diffractionPos.y, 10), Vector3(dispersionParticleDir.x, dispersionParticleDir.y, 0.0f),
-                                (float)g_TimerGame.TotalTime());
-                            diffractionParticle.m_dispersionAngle = diffractionDispersionAngle;
-                            // AddParticle(diffractionParticle);
-                            m_newParticles.push_back(diffractionParticle);
+                            continue;
                         }
                     }
                 }
@@ -689,9 +703,9 @@ namespace Farlor
 
                     // cout << "Origional Particle Current Position: " << m_waveParticles[i].m_currentPosition << endl;
 
-                    WaveParticle particleLeft = WaveParticle(pos, Vector3(left.x, left.y, 0.0f), m_waveParticles[i].m_birthTime);
-                    WaveParticle particleRight = WaveParticle(pos, Vector3(right.x, right.y, 0.0f), m_waveParticles[i].m_birthTime);
-                    WaveParticle particleSame = WaveParticle(pos, Vector3(direction.x, direction.y, 0.0f), m_waveParticles[i].m_birthTime);
+                    WaveParticle particleLeft = WaveParticle(pos, Vector3(left.x, left.y, 0.0f), m_waveParticles[i].m_birthTime, m_waveParticles[i].m_particleSize);
+                    WaveParticle particleRight = WaveParticle(pos, Vector3(right.x, right.y, 0.0f), m_waveParticles[i].m_birthTime, m_waveParticles[i].m_particleSize);
+                    WaveParticle particleSame = WaveParticle(pos, Vector3(direction.x, direction.y, 0.0f), m_waveParticles[i].m_birthTime, m_waveParticles[i].m_particleSize);
 
                     particleLeft.m_currentPosition = particleLeft.m_birthPosition + particleLeft.m_direction * timeMoved;
                     particleRight.m_currentPosition = particleRight.m_birthPosition + particleRight.m_direction * timeMoved;
