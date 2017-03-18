@@ -19,18 +19,11 @@ namespace Farlor
 
     float DistancePointToLine(Vector2 start, Vector2 end, Vector2 p)
     {
-        float squareLength = Vector2(start - end).SqrMagnitude();
-
-        if (squareLength == 0)
-            return abs(Vector2(p - start).Magnitude());
-
-            float t = fmax(0.0f,
-                         fmin(1.0f,
-                             (p-start).Dot(Vector2(end - start)) / squareLength
-                            )
-                        );
-            Vector2 projection = start + t * (end - start);
-            return Vector2(p - projection).Magnitude();
+        Vector2 norm = end - start;
+        Vector2 pointStart = start - p;
+        Vector2 c = norm * (pointStart.Dot(norm) / norm.Dot(norm));
+        Vector2 d = pointStart - c;
+        return sqrt(d.Dot(d));
     }
 
     float TriangleArea(Vector2 a, Vector2 b, Vector2 c)

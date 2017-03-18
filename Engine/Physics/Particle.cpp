@@ -13,6 +13,7 @@ namespace Farlor
         // , m_sampleAngle(0.523599f)
         // , m_sampleDistance(15.0f)
         , m_active(isActive)
+        , m_timeMoved{0.0f}
     {
     }
 
