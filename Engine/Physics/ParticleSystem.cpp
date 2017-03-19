@@ -80,7 +80,7 @@ namespace Farlor
 
             Vector3 direction(0.0f, 1.0f, 0.0f);
             direction *= speed;
-            WaveParticle newParticle(Vector3(x + (initialParticleRadius * i * 0.6666f), y, zCoord), direction, (float)g_TimerGame.TotalTime(), initialParticleRadius);
+            WaveParticle newParticle(Vector3(x + (initialParticleRadius * i), y, zCoord), direction, (float)g_TimerGame.TotalTime(), initialParticleRadius);
             // We need to figure out how to measure "angle" for  parallel waves. Important for diffraction.
             newParticle.m_dispersionAngle = 0.0f;
             AddParticle(newParticle);
