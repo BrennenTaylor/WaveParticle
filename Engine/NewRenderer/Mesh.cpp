@@ -3,7 +3,7 @@
 #include <fstream>
 
 #define TINYOBJLOADER_IMPLEMENTATION
-#include <tinyobjloader/tiny_obj_loader.h>
+#include <tiny_obj_loader.h>
 
 #include "Vertex.h"
 
@@ -36,7 +36,7 @@ namespace Farlor
         hr = pDevice->CreateBuffer( &bufferDesc, &InitData, &m_pVertexBuffer );
         if (FAILED(hr))
         {
-            cout << "Failed to create vertex buffer: " << endl;
+            std::cout << "Failed to create vertex buffer: " << std::endl;
         }
 
         ZeroMemory(&bufferDesc, sizeof(bufferDesc));
@@ -56,7 +56,7 @@ namespace Farlor
         hr = pDevice->CreateBuffer( &bufferDesc, &InitData, &m_pIndexBuffer );
         if (FAILED(hr))
         {
-            cout << "Failed to create index buffer: " << endl;
+            std::cout << "Failed to create index buffer: " << std::endl;
         }
     }
 
@@ -135,11 +135,14 @@ namespace Farlor
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
         std::vector<tinyobj::material_t> materials;
-        std::string err;
+        std::string warnings;
+        std::string errors;
 
-        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, filename.c_str()))
+        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warnings, &errors, filename.c_str()))
         {
-            cout << "Failed to load model:" << filename << endl;
+            std::cout << "Failed to load model:" << filename << std::endl;
+            std::cout << "Warnings: " << warnings << std::endl;
+            std::cout << "Errors: " << errors << std::endl;
         }
 
         std::unordered_map<VertexPositionUVNormal, int> uniqueVertices = {};

@@ -5,10 +5,6 @@
 #include <iostream>
 
 
-
-
-
-
 #ifdef _DEBUG
 
 #define FARLOR_LOG_STARTUP_STDOUT() \

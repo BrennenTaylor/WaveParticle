@@ -147,7 +147,7 @@ namespace Farlor
 ///////////////////////////////////////////////////////////////
 ////////////// Outstreaming operators
 ///////////////////////////////////////////////////////////////
-    ostream& operator<<(ostream& os, Vector4& vec)
+    std::ostream& operator<<(std::ostream& os, Vector4& vec)
     {
         os << "<" << vec.x << ", " << vec.y << ", " << vec.z << ", " << vec.w << ">";
         return os;

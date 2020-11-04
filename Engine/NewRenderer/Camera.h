@@ -2,8 +2,6 @@
 
 #include <DirectXMath.h>
 
-using namespace DirectX;
-
 namespace Farlor
 {
     class Camera
@@ -12,12 +10,12 @@ namespace Farlor
         Camera(bool isMovable);
         void Update(float dt);
 
-        XMVECTOR m_defaultForward;
-        XMVECTOR m_defaultRight;
-        XMVECTOR m_camForward;
-        XMVECTOR m_camRight;
+        DirectX::XMVECTOR m_defaultForward;
+        DirectX::XMVECTOR m_defaultRight;
+        DirectX::XMVECTOR m_camForward;
+        DirectX::XMVECTOR m_camRight;
 
-        XMMATRIX m_camRotationMatrix;
+        DirectX::XMMATRIX m_camRotationMatrix;
 
         float m_moveLeftRight;
         float m_moveBackForward;
@@ -26,10 +24,10 @@ namespace Farlor
         float m_camYaw;
         float m_camPitch;
 
-        XMMATRIX m_camView;
-        XMVECTOR m_camPosition;
-        XMVECTOR m_camTarget;
-        XMVECTOR m_camUp;
+        DirectX::XMMATRIX m_camView;
+        DirectX::XMVECTOR m_camPosition;
+        DirectX::XMVECTOR m_camTarget;
+        DirectX::XMVECTOR m_camUp;
 
         float m_speed;
         float m_rotateSpeed;

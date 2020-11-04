@@ -10,12 +10,12 @@ namespace Farlor
     {
         m_IsMovable = isMovable;
 
-        m_defaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-        m_defaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-        m_camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+        m_defaultForward = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+        m_defaultRight = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+        m_camUp = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
-        m_camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-        m_camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+        m_camRight = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+        m_camForward = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 
         m_moveLeftRight = 0.0f;
         m_moveBackForward = 0.0f;
@@ -24,13 +24,13 @@ namespace Farlor
         m_camYaw = 0.0f;
         m_camPitch = 0.0f;
 
-        m_camPosition = XMVectorSet(20.0f, 20.0f, 20.0f, 0.0f);
-        m_camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+        m_camPosition = DirectX::XMVectorSet(20.0f, 20.0f, 20.0f, 0.0f);
+        m_camTarget = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
         m_speed = 20.0f;
         m_rotateSpeed = 1.1f;
 
-        m_camView = XMMatrixIdentity();
+        m_camView = DirectX::XMMatrixIdentity();
     }
 
     void Camera::Update(float dt)
@@ -91,27 +91,27 @@ namespace Farlor
             }
         }
 
-        m_camRotationMatrix = XMMatrixRotationRollPitchYaw(m_camPitch, m_camYaw, 0);
-        m_camTarget = XMVector3TransformCoord(m_defaultForward, m_camRotationMatrix);
-        m_camTarget = XMVector3Normalize(m_camTarget);
+        m_camRotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(m_camPitch, m_camYaw, 0);
+        m_camTarget = DirectX::XMVector3TransformCoord(m_defaultForward, m_camRotationMatrix);
+        m_camTarget = DirectX::XMVector3Normalize(m_camTarget);
 
-        XMMATRIX RotateYTempMatrix;
-        RotateYTempMatrix = XMMatrixRotationY(m_camYaw);
+        DirectX::XMMATRIX RotateYTempMatrix;
+        RotateYTempMatrix = DirectX::XMMatrixRotationY(m_camYaw);
 
-        m_camRight = XMVector3TransformCoord(m_defaultRight, RotateYTempMatrix);
+        m_camRight = DirectX::XMVector3TransformCoord(m_defaultRight, RotateYTempMatrix);
         // m_camUp = XMVector3TransformCoord(m_camUp, RotateYTempMatrix);
-        m_camForward = XMVector3TransformCoord(m_defaultForward, RotateYTempMatrix);
+        m_camForward = DirectX::XMVector3TransformCoord(m_defaultForward, RotateYTempMatrix);
 
-        m_camPosition += m_moveLeftRight*m_camRight;
-        m_camPosition += m_moveBackForward*m_camForward;
-        m_camPosition += m_moveUpDown*m_camUp;
+        m_camPosition = DirectX::XMVectorAdd(m_camPosition, DirectX::XMVectorScale(m_camRight, m_moveLeftRight));
+        m_camPosition = DirectX::XMVectorAdd(m_camPosition, DirectX::XMVectorScale(m_camForward, m_moveBackForward));
+        m_camPosition = DirectX::XMVectorAdd(m_camPosition, DirectX::XMVectorScale(m_camUp, m_moveUpDown));
 
         m_moveLeftRight = 0.0f;
         m_moveBackForward = 0.0f;
         m_moveUpDown = 0.0f;
 
-        m_camTarget = m_camPosition + m_camTarget;
+        m_camTarget = DirectX::XMVectorAdd(m_camPosition, m_camTarget);
 
-        m_camView = XMMatrixLookAtLH( m_camPosition, m_camTarget, m_camUp );
+        m_camView = DirectX::XMMatrixLookAtLH( m_camPosition, m_camTarget, m_camUp );
     }
 }

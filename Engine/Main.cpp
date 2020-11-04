@@ -1,43 +1,30 @@
 #include <tclap\CmdLine.h>
 
-#include "Core\Engine.h"
+#include "Core/Engine.h"
+#include "Util/Logger.h"
 
-#include "Test.h"
-
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
 
-// #include <spdlog/spdlog.h>
-
-#include "Util/Logger.h"
-
-using namespace std;
-
-using namespace Farlor;
-
-using namespace TCLAP;
-
 int main(int argc, char** argv)
 {
-    // TestRandomCrap();
-    
-
-    EngineConfig config = {};
+    Farlor::EngineConfig config = {};
 
     try
     {
         // Create the interpreter
-        CmdLine cmdParser("Command line description message", ' ', "0.1");
+        TCLAP::CmdLine cmdParser("Command line description message", ' ', "0.1");
 
-        SwitchArg fullscreenSwitch("f","fullscreen","Run in fullscreen mode", cmdParser, false);
-        SwitchArg vsyncSwitch("v","vsync","Run with vsync on", cmdParser, false);
+        TCLAP::SwitchArg fullscreenSwitch("f","fullscreen","Run in fullscreen mode", cmdParser, false);
+        TCLAP::SwitchArg vsyncSwitch("v","vsync","Run with vsync on", cmdParser, false);
 
-        vector<string> allowedRenderApis;
+        std::vector<std::string> allowedRenderApis;
         allowedRenderApis.push_back("d3d11");
-        ValuesConstraint<string> allowedVals(allowedRenderApis);
+        TCLAP::ValuesConstraint<std::string> allowedVals(allowedRenderApis);
         // Define a value argument and add it to the command line
-        ValueArg<string> renderApiArg("r", "RenderDevice", "Render API to use", false,
+        TCLAP::ValueArg<std::string> renderApiArg("r", "RenderDevice", "Render API to use", false,
             "d3d11", "string");
         cmdParser.add(renderApiArg);
 
@@ -48,26 +35,30 @@ int main(int argc, char** argv)
 
         std::string renderApi = renderApiArg.getValue();
 
-        cout << "Using Render API: " << renderApi << endl;
+        std::cout << "Using Render API: " << renderApi << std::endl;
     }
-    catch (ArgException &e)
+    catch (TCLAP::ArgException &e)
     {
-        cerr << "Error: " << e.error() << " for arg " << e.argId() << endl;
+        std::cout << "Error: " << e.error() << " for arg " << e.argId() << std::endl;
     }
 
-    Engine GameEngine = Engine::Instatnce();
+    // TODO: Should this be global static instance?
+    Farlor::Engine gameEngine = Farlor::Engine::Instatnce();
 
-    // FARLOR_LOG_STARTUP_STDOUT()
-    FARLOR_LOG_STARTUP_SIMPLE_FILE("C:/Log/WaveParticle.txt")
+    if (!std::filesystem::exists("E:/Log/"))
+    {
+        std::filesystem::create_directories("E:/Log/");
+    }
+
+    FARLOR_LOG_STARTUP_SIMPLE_FILE("E:/Log/WaveParticle.txt")
 
     FARLOR_LOG_INFO("Info")
     FARLOR_LOG_WARNING("Warning")
     FARLOR_LOG_ERROR("Error")
     FARLOR_LOG_CRITICAL("Critical")
 
-    GameEngine.Initialize(config);
-
-    GameEngine.Run();
+    gameEngine.Initialize(config);
+    gameEngine.Run();
 
     return 0;
 }

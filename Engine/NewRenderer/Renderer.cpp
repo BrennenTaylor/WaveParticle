@@ -1,22 +1,22 @@
-#include <d3dcompiler.h>
-
 #include "Renderer.h"
+
+#include <d3dcompiler.h>
+//
+//
+#include "WICTextureLoader.h"
 
 #include "Camera.h"
 
-#include <iostream>
-
 #include "Mesh.h"
-#include "WICTextureLoader.h"
+
 
 #include "../ECS/TransformComponent.h"
 #include "../ECS/TransformManager.h"
 
 #include "../Util/Logger.h"
 
-using namespace std;
 
-using namespace DirectX;
+#include <iostream>
 
 namespace Farlor
 {
@@ -154,7 +154,7 @@ namespace Farlor
         result = m_pDevice->CreateRasterizerState(&rasterDesc.m_rasterDesc, &m_rasterState);
         if (FAILED(result))
         {
-            cout << "Failed to create raster state" << endl;
+            std::cout << "Failed to create raster state" << std::endl;
         }
 
         m_pDeviceContext->RSSetState(m_rasterState);
@@ -164,7 +164,7 @@ namespace Farlor
         result = m_pDevice->CreateRasterizerState(&rasterDesc.m_rasterDesc, &m_rasterStateNoCull);
         if (FAILED(result))
         {
-            cout << "Failed to create raster state" << endl;
+            std::cout << "Failed to create raster state" << std::endl;
         }
 
         // Create and set viewport
@@ -189,7 +189,7 @@ namespace Farlor
         result = m_pDevice->CreateBuffer(&cbd, 0, &m_cbTransformsBuffer);
         if (FAILED(result))
         {
-            cout << "Failed to create constant buffer layout" << endl;
+            std::cout << "Failed to create constant buffer layout" << std::endl;
         }
 
         // Create constatnt buffer
@@ -289,7 +289,7 @@ namespace Farlor
         result = m_pDevice->CreateTexture2D(&waveParticleTextureDesc, 0, &m_pWaveParticleRenderTarget);
         if (FAILED(result))
         {
-            cout << "Failed to create wave particle texture" << endl;
+            std::cout << "Failed to create wave particle texture" << std::endl;
         }
 
         D3D11_TEXTURE2D_DESC waveParticleStagingTextureDesc = {0};
@@ -308,7 +308,7 @@ namespace Farlor
         result = m_pDevice->CreateTexture2D(&waveParticleStagingTextureDesc, 0, &m_pWaveParticleStagingResource);
         if (FAILED(result))
         {
-            cout << "Failed to create wave particle staging texture" << endl;
+            std::cout << "Failed to create wave particle staging texture" << std::endl;
         }
 
         // Create vertex staging data
@@ -373,7 +373,7 @@ namespace Farlor
         result = m_pDevice->CreateBlendState(&blendStateDesc, &m_pEnableAlphaBlending);
     	if(FAILED(result))
     	{
-    		cout << "Failed to create alpha bend state active" << endl;
+    		std::cout << "Failed to create alpha bend state active" << std::endl;
     	}
 
         blendStateDesc.RenderTarget[0].BlendEnable = FALSE;
@@ -388,7 +388,7 @@ namespace Farlor
         result = m_pDevice->CreateBlendState(&blendStateDesc, &m_pDisableAlphaBlending);
     	if(FAILED(result))
     	{
-    		cout << "Failed to create alpha bend state active" << endl;
+    		std::cout << "Failed to create alpha bend state active" << std::endl;
     	}
 
 
@@ -426,7 +426,7 @@ namespace Farlor
     {
         m_camView = g_WaveParticleCamera.m_camView;
         // Perspective
-        m_camProjection = XMMatrixPerspectiveFovLH(0.4f*3.14f, (float)m_width/m_height, 1.0f, 1000.0f);
+        m_camProjection = DirectX::XMMatrixPerspectiveFovLH(0.4f*3.14f, (float)m_width/m_height, 1.0f, 1000.0f);
 
         float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
         m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, clearColor);
@@ -537,29 +537,29 @@ namespace Farlor
 
     void Renderer::Render(RenderingComponent& renderingComponent)
     {
-        // cout << "Rendering Component: " << renderingComponent.m_mesh << endl;
+        // std::cout << "Rendering Component: " << renderingComponent.m_mesh << std::endl;
         TransformComponent transformComponent = g_TransformManager.GetComponent(renderingComponent.m_entity);
 
-        XMMATRIX world = XMMatrixIdentity();
+        DirectX::XMMATRIX world = DirectX::XMMatrixIdentity();
 
-        XMMATRIX scale = XMMatrixScaling(transformComponent.m_scale.x, transformComponent.m_scale.y, transformComponent.m_scale.z);
+        DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(transformComponent.m_scale.x, transformComponent.m_scale.y, transformComponent.m_scale.z);
         // XMMATRIX translate = XMMatrixTranslation(, comp.m_position.y, comp.m_position.z);
 
         // XMVECTOR rotAxis = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-        XMMATRIX rotate = XMMatrixRotationRollPitchYaw(transformComponent.m_rotation.x, transformComponent.m_rotation.y, transformComponent.m_rotation.z);
+        DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationRollPitchYaw(transformComponent.m_rotation.x, transformComponent.m_rotation.y, transformComponent.m_rotation.z);
 
-        XMMATRIX translate = XMMatrixTranslation(transformComponent.m_position.x, transformComponent.m_position.y, transformComponent.m_position.z);
+        DirectX::XMMATRIX translate = DirectX::XMMatrixTranslation(transformComponent.m_position.x, transformComponent.m_position.y, transformComponent.m_position.z);
         world = scale * rotate *  translate;
 
-        m_cbTransforms.World = XMMatrixTranspose(world);
+        m_cbTransforms.World = DirectX::XMMatrixTranspose(world);
 
-        XMMATRIX wv = world * m_camView;
+        DirectX::XMMATRIX wv = world * m_camView;
 
-        m_cbTransforms.WorldView = XMMatrixTranspose(wv);
+        m_cbTransforms.WorldView = DirectX::XMMatrixTranspose(wv);
 
-        XMMATRIX wvp = world * m_camView * m_camProjection;
+        DirectX::XMMATRIX wvp = world * m_camView * m_camProjection;
 
-        m_cbTransforms.WorldViewProjection = XMMatrixTranspose(wvp);
+        m_cbTransforms.WorldViewProjection = DirectX::XMMatrixTranspose(wvp);
 
         m_pDeviceContext->UpdateSubresource(m_cbTransformsBuffer, 0, 0, &m_cbTransforms, 0, 0);
 
@@ -590,8 +590,8 @@ namespace Farlor
 
         m_pDeviceContext->UpdateSubresource(m_cbLightPropertiesBuffer, 0, 0, &m_cbLightProperties, 0, 0);
 
-        XMFLOAT3 pos;
-        XMStoreFloat3(&pos, g_MainCamera.m_camPosition);
+        DirectX::XMFLOAT3 pos;
+        DirectX::XMStoreFloat3(&pos, g_MainCamera.m_camPosition);
         m_cbCameraParams.m_position = Vector3(pos.x, pos.y, pos.z);
 
         m_pDeviceContext->UpdateSubresource(m_cbCameraParamsBuffer, 0, 0, &m_cbCameraParams, 0, 0);
@@ -700,7 +700,7 @@ namespace Farlor
         }
     }
 
-    void Renderer::RegisterShader(string filename, string name, bool hasVS, bool hasPS, vector<string> defines)
+    void Renderer::RegisterShader(std::string filename, std::string name, bool hasVS, bool hasPS, std::vector<std::string> defines)
     {
         Shader newShader(filename, hasVS, hasPS, defines);
         m_shaders[name] = newShader;

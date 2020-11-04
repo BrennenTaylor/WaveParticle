@@ -3,8 +3,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-// #include <d3d11.h>
-#include "D3D11/WrappedD3D11.h"
+#include <d3d11shader.h>
+#include <d3d12shader.h>
+
+#include <d3d11.h>
+
+#include "D3D11/DXGIModeDesc.h"
+#include "D3D11/DXGISwapChainDesc.h"
+#include "D3D11/RasterizerStateDesc.h"
 
 #include "../Core/Window.h"
 
@@ -49,7 +55,7 @@ class Renderer
 
         void RegisterGlobalResource(std::string name, std::string resourceType, int widthScale, int heightScale, std::string format);
         void CreateGlobalResources();
-        void RegisterShader(std::string filename, std::string name, bool hasVS, bool hasPS, vector<string> m_shaders);
+        void RegisterShader(std::string filename, std::string name, bool hasVS, bool hasPS, std::vector<std::string> m_shaders);
         void CreateShaders();
 
         static RenderResourceType TypeFromString(std::string strType);
@@ -129,7 +135,7 @@ class Renderer
 
         ID3D11ShaderResourceView* m_pParticleTextureResourceView;
 
-        vector<ParticleSystem> m_particleSystems;
+        std::vector<ParticleSystem> m_particleSystems;
 
         ID3D11SamplerState* m_pWPSampleState;
 

@@ -15,6 +15,12 @@ cmake_minimum_required(VERSION 2.8)
 # Projects name
 project(Engine)
 
+
+find_package(spdlog CONFIG REQUIRED)
+
+find_path(TCLAP_INCLUDE_DIR tclap/CmdLine.h)
+find_library(TCLAP_LIBRARY tclap)
+
 message (STATUS "*******Build System Information*******")
 message(STATUS "We are on a ${CMAKE_SYSTEM_NAME} system")
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")

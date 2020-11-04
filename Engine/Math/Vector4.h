@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 namespace Farlor
 {
     class Vector4
@@ -57,7 +55,7 @@ namespace Farlor
         friend const Vector4 operator*(float lhs, const Vector4& rhs);
 
         // Out Streaming
-        friend ostream& operator<<(ostream& os, Vector4& vec);
+        friend std::ostream& operator<<(std::ostream& os, Vector4& vec);
 
         // Local Math Operations
         float Magnitude();

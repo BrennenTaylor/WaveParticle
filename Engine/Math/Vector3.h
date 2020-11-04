@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 namespace Farlor
 {
     class Vector3
@@ -56,7 +54,7 @@ namespace Farlor
         friend const Vector3 operator*(float lhs, const Vector3& rhs);
 
         // Out Streaming
-        friend ostream& operator<<(ostream& os, Vector3& vec);
+        friend std::ostream& operator<<(std::ostream& os, Vector3& vec);
 
         // Local Math Operations
         float Magnitude();
@@ -85,10 +83,13 @@ namespace Farlor
     using Point = Vector3;
 }
 
-template<> struct hash<Farlor::Vector3>
+namespace std
 {
-    size_t operator()(Farlor::Vector3 const& vector) const
+    template<> struct hash<Farlor::Vector3>
     {
-        return ((hash<float>()(vector.x) ^ (hash<float>()(vector.y) << 1)) >> 1 )^ (hash<float>()(vector.z) << 1);
-    }
-};
+        size_t operator()(Farlor::Vector3 const& vector) const
+        {
+            return ((hash<float>()(vector.x) ^ (hash<float>()(vector.y) << 1)) >> 1) ^ (hash<float>()(vector.z) << 1);
+        }
+    };
+}

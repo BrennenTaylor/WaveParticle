@@ -2,8 +2,6 @@
 
 #include <vector>
 
-using namespace std;
-
 namespace Farlor
 {
     class UIDGenerator
@@ -14,7 +12,7 @@ namespace Farlor
         unsigned int GetID();
 
     private:
-        vector<unsigned int> m_releasedIDs;
+        std::vector<unsigned int> m_releasedIDs;
         unsigned int m_currentCount;
 
     };

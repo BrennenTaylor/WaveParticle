@@ -1,9 +1,5 @@
 #include "Game.h"
 
-#include <iostream>
-
-using namespace std;
-
 namespace Farlor
 {
     Game::Game(EngineExport& engineExport)
@@ -13,9 +9,6 @@ namespace Farlor
 
     void Game::Initialize()
     {
-        // Entity leftPaddle = m_pECSManager->CreateEntity();
-        // Entity rightPaddle = m_pECSManager->CreateEntity();
-        // Entity ball = m_pECSManager->CreateEntity();
     }
 
     void Game::Update(float dt)

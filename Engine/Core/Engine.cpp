@@ -42,8 +42,6 @@
 
 #include "../Util/Logger.h"
 
-using namespace std;
-
 namespace Farlor
 {
     typedef GameExport* (*GetGameAPIPtr)(LinearAllocator& allocator, EngineExport& engineExport);
@@ -83,7 +81,7 @@ namespace Farlor
         // g_WaveParticles.AddSegments(LineSegment(0.0f, 170.0f, 0.0f, 30.0f));
         g_WaveParticles.AddSegments(LineSegment(100.0f, 30.0f, 30.0f, 30.0f));
 
-        g_WaveParticleCamera.m_camPosition = XMVectorSet(0.0f, 0.0f, -200.0f, 0.0f);
+        g_WaveParticleCamera.m_camPosition = DirectX::XMVectorSet(0.0f, 0.0f, -200.0f, 0.0f);
     }
 
     int Engine::Run()
@@ -267,11 +265,11 @@ namespace Farlor
 
         for (auto& resource : rendererGlobalResources)
         {
-            string name = resource["name"].asString();
-            string type = resource["type"].asString();
+            std::string name = resource["name"].asString();
+            std::string type = resource["type"].asString();
             int widthScale = resource["width-scale"].asInt();
             int heightScale = resource["height-scale"].asInt();
-            string format = resource["format"].asString();
+            std::string format = resource["format"].asString();
 
             g_RenderingSystem.RegisterGlobalResource(name, type, widthScale, heightScale, format);
         }
@@ -286,13 +284,13 @@ namespace Farlor
         auto shaders = shadersConfigRoot["shaders"];
         for (auto& shader : shaders)
         {
-            string filename = shader["filename"].asString();
-            string shaderName = shader["name"].asString();
+            std::string filename = shader["filename"].asString();
+            std::string shaderName = shader["name"].asString();
 
             bool hasVS = shader["hasVS"].asBool();
             bool hasPS = shader["hasPS"].asBool();
 
-            vector<string> defines;
+            std::vector<std::string> defines;
 
             auto defineValues = shader["defines"];
             for (auto& define : defineValues)

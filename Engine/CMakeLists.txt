@@ -1,3 +1,12 @@
+set(CMAKE_CXX_STANDARD 17)
+
+find_package(spdlog CONFIG REQUIRED)
+
+find_path(TCLAP_INCLUDE_DIR tclap/CmdLine.h)
+find_library(TCLAP_LIBRARY tclap)
+
+find_package(tinyobjloader CONFIG REQUIRED)
+
 add_subdirectory(Core)
 add_subdirectory(ECS)
 add_subdirectory(Input)
@@ -22,11 +31,29 @@ set (ENGINE_INCLUDES
     Farlor.h
 )
 
-include_directories(${EXTERNAL_INCLUDES})
+include_directories(
+    ${EXTERNAL_INCLUDES}
+    ${TCLAP_INCLUDE_DIR}
+)
 
 link_directories(${EXTERNAL_LIB_64})
 
-add_executable(Engine ${ENGINE_SOURCES} ${ENGINE_INCLUDES})
+add_executable(Engine
+    ${ENGINE_SOURCES}
+    ${ENGINE_INCLUDES}
+)
+
+target_compile_definitions(Engine
+    PUBLIC _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+)
+
+set_target_properties(Engine PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)
+
+
 
 # target_link_libraries(Engine Game d3d11 dxgi winmm d3dcompiler xinput)
-target_link_libraries(Engine d3d11 dxgi winmm d3dcompiler xinput Ws2_32 dxguid)
+target_link_libraries(Engine tinyobjloader::tinyobjloader d3d11 dxgi winmm d3dcompiler xinput Ws2_32 dxguid)

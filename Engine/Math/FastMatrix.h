@@ -2,6 +2,8 @@
 
 #include "FastVector.h"
 
+#include <xmmintrin.h>
+
 namespace Farlor
 {
     class Matrix2x2;

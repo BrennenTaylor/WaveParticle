@@ -6,8 +6,6 @@
 
 #include "../NewRenderer/Vertex.h"
 
-// #include "ParticleSystemTimer.h"
-
 #include "../Physics/Plane.h"
 #include "../Physics/LineSegment.h"
 

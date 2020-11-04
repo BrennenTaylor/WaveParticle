@@ -125,8 +125,8 @@ namespace Farlor
         //     newParticle.m_dispersionAngle = deltaTheta;
         //     AddParticle(newParticle);
         
-        //     cout << "Particle direction: " << direction.Normalized() << endl;
-        //     cout << "Dispersion angle: " << deltaTheta << endl;
+        //     std::cout << "Particle direction: " << direction.Normalized() << std::endl;
+        //     std::cout << "Dispersion angle: " << deltaTheta << std::endl;
 
         //     angle += deltaTheta;
         // }
@@ -144,7 +144,7 @@ namespace Farlor
                 return;
             }
         }
-        cout << "Failed to add particle, all particle slots active" << endl;
+        std::cout << "Failed to add particle, all particle slots active" << std::endl;
     }
 
     void ParticleSystem::AddPlane(Plane plane)
@@ -155,7 +155,7 @@ namespace Farlor
     void ParticleSystem::Update(float timestep)
     {
         int sampleDensity = 1;
-        vector<WaveParticle> m_newParticles;
+        std::vector<WaveParticle> m_newParticles;
 
         for (int i = 0; i < m_numActualParticles; i++)
         {
@@ -216,7 +216,7 @@ namespace Farlor
                 Vector2 D = Vector2(newRight.x, newRight.y);
 
                 // Check if end points of any obstacles intersect this area. If so, we have a place for diffraction
-                vector<DiffractionCollisionPacket> m_diffractionCollisionPackets;
+                std::vector<DiffractionCollisionPacket> m_diffractionCollisionPackets;
 
                 // Need particle dir
                 Vector2 particleDir = Vector2(direction.x, direction.y);
@@ -235,60 +235,60 @@ namespace Farlor
                         // First end point
                         if (PointInTriangle(firstEndPoint, B, C, D))
                         {
-                            cout << "First" << endl;
-                            cout << "Point: " << firstEndPoint << endl;
-                            cout << "B: " << B << endl;
-                            cout << "C: " << C << endl;
-                            cout << "D: " << D << endl;
+                            std::cout << "First" << std::endl;
+                            std::cout << "Point: " << firstEndPoint << std::endl;
+                            std::cout << "B: " << B << std::endl;
+                            std::cout << "C: " << C << std::endl;
+                            std::cout << "D: " << D << std::endl;
                             endpointCollision = true;
                         }
                         if (PointInTriangle(firstEndPoint, B, D, E))
                         {
-                            cout << "First" << endl;
-                            cout << "Point: " << firstEndPoint << endl;
-                            cout << "B: " << B << endl;
-                            cout << "D: " << D << endl;
-                            cout << "E: " << E << endl;
+                            std::cout << "First" << std::endl;
+                            std::cout << "Point: " << firstEndPoint << std::endl;
+                            std::cout << "B: " << B << std::endl;
+                            std::cout << "D: " << D << std::endl;
+                            std::cout << "E: " << E << std::endl;
                             endpointCollision = true;
                         }
 
                         if (endpointCollision)
                         {
-                            cout << "OldPoint2d: " << oldPoint2d << endl;
-                            cout << "NewPoint2d: " << newPoint2d << endl;
+                            std::cout << "OldPoint2d: " << oldPoint2d << std::endl;
+                            std::cout << "NewPoint2d: " << newPoint2d << std::endl;
 
                             float distLeft = DistancePointToLine(B, E, firstEndPoint);
                             float distRight = DistancePointToLine(C, D, firstEndPoint);
                             float particleSize = m_waveParticles[i].m_particleSize;
 
-                            cout << "Dist left: " << distLeft << endl;
-                            cout << "Dist Right: " << distRight << endl;
-                            cout << "Particle Radius: " << m_waveParticles[i].m_particleSize << endl;
+                            std::cout << "Dist left: " << distLeft << std::endl;
+                            std::cout << "Dist Right: " << distRight << std::endl;
+                            std::cout << "Particle Radius: " << m_waveParticles[i].m_particleSize << std::endl;
 
                             float amountTowardB = distLeft / (particleSize*2.0f);
                             float amountTowardC = distRight / (particleSize*2.0f);
 
                             // Vector2 endpointDir = secondEndPoint - Vector2(birthPoint.x, birthPoint.y);
                             // endpointDir = endpointDir.Normalized();
-                            // cout << "Endpoint dir: " <<  endpointDir << endl;
-                            // cout << "Dir2D: " <<  direction2d << endl;
+                            // std::cout << "Endpoint dir: " <<  endpointDir << std::endl;
+                            // std::cout << "Dir2D: " <<  direction2d << std::endl;
 
                             // float angleToParticleDir = acos(endpointDir.Dot(direction2d));
-                            // cout << angleToParticleDir << endl;
+                            // std::cout << angleToParticleDir << std::endl;
 
                             // float angle1 = halfAngle - angleToParticleDir;
                             // float angle2 = halfAngle + angleToParticleDir;
 
-                            // cout << dispersionAngle << endl; 
-                            // cout << "Angle1: " << angle1 << endl;
-                            // cout << "Angle2: " << angle2 << endl;
-                            // cout << "Tot angle: " << angle1+angle2 << endl;
+                            // std::cout << dispersionAngle << std::endl; 
+                            // std::cout << "Angle1: " << angle1 << std::endl;
+                            // std::cout << "Angle2: " << angle2 << std::endl;
+                            // std::cout << "Tot angle: " << angle1+angle2 << std::endl;
 
                             // float halfAngle1 = angle1 / 2.0f;
                             // float halfAngle2 = angle2 / 2.0f;
 
-                            // cout << "Half Angle 1: " << halfAngle1 << endl;
-                            // cout << "Half Angle 2: " << halfAngle2 << endl;
+                            // std::cout << "Half Angle 1: " << halfAngle1 << std::endl;
+                            // std::cout << "Half Angle 2: " << halfAngle2 << std::endl;
 
                             // Vector2 part1Dir(endpointDir.x*cos(halfAngle1) - endpointDir.y*sin(halfAngle1),
                             //     endpointDir.x*sin(halfAngle1) + endpointDir.y*cos(halfAngle1));
@@ -298,8 +298,8 @@ namespace Farlor
                             //     endpointDir.x*sin(-1.0f*halfAngle2) + endpointDir.y*cos(-1.0f*halfAngle2));
                             // part2Dir = part2Dir.Normalized();
 
-                            // cout << "Part1Dir: " << part1Dir.Normalized() << endl;
-                            // cout << "Part2Dir: " << part2Dir.Normalized() << endl;
+                            // std::cout << "Part1Dir: " << part1Dir.Normalized() << std::endl;
+                            // std::cout << "Part2Dir: " << part2Dir.Normalized() << std::endl;
 
 
                             Vector2 part1Dir = Vector2(particleDir.x, particleDir.y);
@@ -328,7 +328,7 @@ namespace Farlor
                             part1.m_birthPosition = part1.m_currentPosition - part1.m_direction * m_waveParticles[i].m_timeMoved;
                             part2.m_birthPosition = part2.m_currentPosition - part2.m_direction * m_waveParticles[i].m_timeMoved;
 
-                            cout << "Time Moved: " << m_waveParticles[i].m_timeMoved << endl;
+                            std::cout << "Time Moved: " << m_waveParticles[i].m_timeMoved << std::endl;
 
                             part1.m_dispersionAngle = m_waveParticles[i].m_dispersionAngle*amountTowardB;
                             part2.m_dispersionAngle = m_waveParticles[i].m_dispersionAngle*amountTowardC;
@@ -349,60 +349,60 @@ namespace Farlor
                         // Second end point
                         if (PointInTriangle(secondEndPoint, B, C, D))
                         {
-                            cout << "Second" << endl;
-                            cout << "Point: " << secondEndPoint << endl;
-                            cout << "B: " << B << endl;
-                            cout << "C: " << C << endl;
-                            cout << "D: " << D << endl;
+                            std::cout << "Second" << std::endl;
+                            std::cout << "Point: " << secondEndPoint << std::endl;
+                            std::cout << "B: " << B << std::endl;
+                            std::cout << "C: " << C << std::endl;
+                            std::cout << "D: " << D << std::endl;
                             endpointCollision = true;
                         }
                         if (PointInTriangle(secondEndPoint, B, D, E))
                         {
-                            cout << "Second" << endl;
-                            cout << "Point: " << secondEndPoint << endl;
-                            cout << "B: " << B << endl;
-                            cout << "D: " << D << endl;
-                            cout << "E: " << E << endl;
+                            std::cout << "Second" << std::endl;
+                            std::cout << "Point: " << secondEndPoint << std::endl;
+                            std::cout << "B: " << B << std::endl;
+                            std::cout << "D: " << D << std::endl;
+                            std::cout << "E: " << E << std::endl;
                             endpointCollision = true;
                         }
 
                         if (endpointCollision)
                         {
-                            cout << "OldPoint2d: " << oldPoint2d << endl;
-                            cout << "NewPoint2d: " << newPoint2d << endl;
+                            std::cout << "OldPoint2d: " << oldPoint2d << std::endl;
+                            std::cout << "NewPoint2d: " << newPoint2d << std::endl;
 
                             float distLeft = DistancePointToLine(B, E, secondEndPoint);
                             float distRight = DistancePointToLine(C, D, secondEndPoint);
                             float particleSize = m_waveParticles[i].m_particleSize;
 
-                            cout << "Dist left: " << distLeft << endl;
-                            cout << "Dist Right: " << distRight << endl;
-                            cout << "Particle Radius: " << m_waveParticles[i].m_particleSize << endl;
+                            std::cout << "Dist left: " << distLeft << std::endl;
+                            std::cout << "Dist Right: " << distRight << std::endl;
+                            std::cout << "Particle Radius: " << m_waveParticles[i].m_particleSize << std::endl;
 
                             float amountTowardB = distLeft / (particleSize*2.0f);
                             float amountTowardC = distRight / (particleSize*2.0f);
 
                             // Vector2 endpointDir = secondEndPoint - Vector2(birthPoint.x, birthPoint.y);
                             // endpointDir = endpointDir.Normalized();
-                            // cout << "Endpoint dir: " <<  endpointDir << endl;
-                            // cout << "Dir2D: " <<  direction2d << endl;
+                            // std::cout << "Endpoint dir: " <<  endpointDir << std::endl;
+                            // std::cout << "Dir2D: " <<  direction2d << std::endl;
 
                             // float angleToParticleDir = acos(endpointDir.Dot(direction2d));
-                            // cout << angleToParticleDir << endl;
+                            // std::cout << angleToParticleDir << std::endl;
 
                             // float angle1 = halfAngle - angleToParticleDir;
                             // float angle2 = halfAngle + angleToParticleDir;
 
-                            // cout << dispersionAngle << endl; 
-                            // cout << "Angle1: " << angle1 << endl;
-                            // cout << "Angle2: " << angle2 << endl;
-                            // cout << "Tot angle: " << angle1+angle2 << endl;
+                            // std::cout << dispersionAngle << std::endl; 
+                            // std::cout << "Angle1: " << angle1 << std::endl;
+                            // std::cout << "Angle2: " << angle2 << std::endl;
+                            // std::cout << "Tot angle: " << angle1+angle2 << std::endl;
 
                             // float halfAngle1 = angle1 / 2.0f;
                             // float halfAngle2 = angle2 / 2.0f;
 
-                            // cout << "Half Angle 1: " << halfAngle1 << endl;
-                            // cout << "Half Angle 2: " << halfAngle2 << endl;
+                            // std::cout << "Half Angle 1: " << halfAngle1 << std::endl;
+                            // std::cout << "Half Angle 2: " << halfAngle2 << std::endl;
 
                             // Vector2 part1Dir(endpointDir.x*cos(halfAngle1) - endpointDir.y*sin(halfAngle1),
                             //     endpointDir.x*sin(halfAngle1) + endpointDir.y*cos(halfAngle1));
@@ -412,8 +412,8 @@ namespace Farlor
                             //     endpointDir.x*sin(-1.0f*halfAngle2) + endpointDir.y*cos(-1.0f*halfAngle2));
                             // part2Dir = part2Dir.Normalized();
 
-                            // cout << "Part1Dir: " << part1Dir.Normalized() << endl;
-                            // cout << "Part2Dir: " << part2Dir.Normalized() << endl;
+                            // std::cout << "Part1Dir: " << part1Dir.Normalized() << std::endl;
+                            // std::cout << "Part2Dir: " << part2Dir.Normalized() << std::endl;
 
 
                             Vector2 part1Dir = Vector2(particleDir.x, particleDir.y);
@@ -442,7 +442,7 @@ namespace Farlor
                             part1.m_birthPosition = part1.m_currentPosition - part1.m_direction * m_waveParticles[i].m_timeMoved;
                             part2.m_birthPosition = part2.m_currentPosition - part2.m_direction * m_waveParticles[i].m_timeMoved;
 
-                            cout << "Time Moved: " << m_waveParticles[i].m_timeMoved << endl;
+                            std::cout << "Time Moved: " << m_waveParticles[i].m_timeMoved << std::endl;
 
                             part1.m_dispersionAngle = m_waveParticles[i].m_dispersionAngle*amountTowardB;
                             part2.m_dispersionAngle = m_waveParticles[i].m_dispersionAngle*amountTowardC;
@@ -477,7 +477,7 @@ namespace Farlor
                 float distanceNew = (newPoint - first).Dot(lineDirNorm);
 
 
-                // cout << "distancenew * old: " << (distanceNew * distanceOld) << endl;
+                // std::cout << "distancenew * old: " << (distanceNew * distanceOld) << std::endl;
                 if ((distanceNew >= 0.0f && distanceOld < 0.0f) || (distanceNew <= 0.0f && distanceOld > 0.0f))
                 {
                     float s1_x, s1_y, s2_x, s2_y;
@@ -495,9 +495,9 @@ namespace Farlor
                     {
                         // Collision detected
                         // Vector3 collisionPoint(oldPoint.x + (t * s1_x), oldPoint.y + (t * s1_y), 0.0f);
-                        // cout << "Collision Detected at: " << collisionPoint << endl;
+                        // std::cout << "Collision Detected at: " << collisionPoint << std::endl;
                         //
-                        // cout << "LineDirNorm: " << lineDirNorm << endl;
+                        // std::cout << "LineDirNorm: " << lineDirNorm << std::endl;
                         // lineDirNorm.Normalized();
 
                         m_waveParticles[i].m_direction = m_waveParticles[i].m_direction -
@@ -522,21 +522,21 @@ namespace Farlor
             {
                 float distanceOld = (m_waveParticles[i].m_currentPosition - plane.m_point).Dot(plane.m_normal);
                 float distanceNew = (newPoint - plane.m_point).Dot(plane.m_normal);
-                // cout << "Distance Old: " << distanceOld << endl;
-                // cout << "Distance New: " << distanceNew << endl;
-                // cout << "Old Point: " << m_waveParticles[i].m_currentPosition << endl;
-                // cout << "New Point: " << newPoint << endl;
+                // std::cout << "Distance Old: " << distanceOld << std::endl;
+                // std::cout << "Distance New: " << distanceNew << std::endl;
+                // std::cout << "Old Point: " << m_waveParticles[i].m_currentPosition << std::endl;
+                // std::cout << "New Point: " << newPoint << std::endl;
 
-                // cout << "distancenew * old: " << (distanceNew * distanceOld) << endl;
+                // std::cout << "distancenew * old: " << (distanceNew * distanceOld) << std::endl;
                 if ((distanceNew >= 0.0f && distanceOld < 0.0f) || (distanceNew <= 0.0f && distanceOld > 0.0f))
                 {
                     // Collision with plane happened
-                    // cout << "Collision with plane happened" << endl;
-                    // cout << "Old Direction: " << m_waveParticles[i].m_direction << endl;
+                    // std::cout << "Collision with plane happened" << std::endl;
+                    // std::cout << "Old Direction: " << m_waveParticles[i].m_direction << std::endl;
                     m_waveParticles[i].m_direction = m_waveParticles[i].m_direction - (2.0f * m_waveParticles[i].m_direction.Dot(plane.m_normal) * plane.m_normal);
                     m_waveParticles[i].m_birthPosition = m_waveParticles[i].m_birthPosition + (2.0f * (plane.m_point - m_waveParticles[i].m_birthPosition).Dot(plane.m_normal) * plane.m_normal);
 
-                    // cout << "New Direction: " << m_waveParticles[i].m_direction << endl;
+                    // std::cout << "New Direction: " << m_waveParticles[i].m_direction << std::endl;
                     collision = true;
                     break;
                 }
@@ -597,11 +597,11 @@ namespace Farlor
 
             //         if (PointInTriangle(firstEndPoint, B, C, D))
             //         {
-            //             cout << "First" << endl;
-            //             cout << "Point: " << firstEndPoint << endl;
-            //             cout << "B: " << B << endl;
-            //             cout << "C: " << C << endl;
-            //             cout << "D: " << D << endl;
+            //             std::cout << "First" << std::endl;
+            //             std::cout << "Point: " << firstEndPoint << std::endl;
+            //             std::cout << "B: " << B << std::endl;
+            //             std::cout << "C: " << C << std::endl;
+            //             std::cout << "D: " << D << std::endl;
             //             Vector2 lineDir = secondEndPoint - firstEndPoint;
             //             lineDir = lineDir.Normalized();
             //             // m_diffractionCollisionPackets.push_back(DiffractionCollisionPacket(firstEndPoint, lineDir, particleDir));
@@ -612,11 +612,11 @@ namespace Farlor
                     
             //         if (PointInTriangle(secondEndPoint, B, D, E))
             //         {
-            //             cout << "Second" << endl;
-            //             cout << "Point: " << secondEndPoint << endl;
-            //             cout << "B: " << B << endl;
-            //             cout << "D: " << D << endl;
-            //             cout << "E: " << E << endl;
+            //             std::cout << "Second" << std::endl;
+            //             std::cout << "Point: " << secondEndPoint << std::endl;
+            //             std::cout << "B: " << B << std::endl;
+            //             std::cout << "D: " << D << std::endl;
+            //             std::cout << "E: " << E << std::endl;
             //             Vector2 lineDir = firstEndPoint - secondEndPoint;
             //             lineDir = lineDir.Normalized();
             //             // m_diffractionCollisionPackets.push_back(DiffractionCollisionPacket(secondEndPoint, lineDir, particleDir));
@@ -627,18 +627,18 @@ namespace Farlor
 
             //     if (m_diffractionCollisionPackets.size() > 0)
             //     {
-            //         cout << "We had a collisions" << endl;
+            //         std::cout << "We had a collisions" << std::endl;
 
             //         for (auto itr = m_diffractionCollisionPackets.begin(); itr != m_diffractionCollisionPackets.end(); ++itr)
             //         {
-            //             cout << "Collision with obstacle end point: " << itr->m_endPoint << endl;
-            //             cout << "Obstacle direction: " << itr->m_obstacleDir << endl;
-            //             cout << "ParticleDir: " << itr->m_particleDir << endl;
+            //             std::cout << "Collision with obstacle end point: " << itr->m_endPoint << std::endl;
+            //             std::cout << "Obstacle direction: " << itr->m_obstacleDir << std::endl;
+            //             std::cout << "ParticleDir: " << itr->m_particleDir << std::endl;
 
             //             // We need to spawn a new particle for this collision
             //             // First, lets identify the dispersion angle
             //             float diffractionDispersionAngle = acos(itr->m_obstacleDir.Dot(itr->m_particleDir));
-            //             cout << "New dispersion angle: " << diffractionDispersionAngle << endl;
+            //             std::cout << "New dispersion angle: " << diffractionDispersionAngle << std::endl;
 
             //             // float tempAngle = DEGREE_TO_RAD(130);
             //             // if (diffractionDispersionAngle >= tempAngle)
@@ -716,11 +716,11 @@ namespace Farlor
 
             //         if (PointInTriangle(firstEndPoint, B, C, D))
             //         {
-            //             cout << "First" << endl;
-            //             cout << "Point: " << firstEndPoint << endl;
-            //             cout << "B: " << B << endl;
-            //             cout << "C: " << C << endl;
-            //             cout << "D: " << D << endl;
+            //             std::cout << "First" << std::endl;
+            //             std::cout << "Point: " << firstEndPoint << std::endl;
+            //             std::cout << "B: " << B << std::endl;
+            //             std::cout << "C: " << C << std::endl;
+            //             std::cout << "D: " << D << std::endl;
             //             Vector2 lineDir = secondEndPoint - firstEndPoint;
             //             lineDir = lineDir.Normalized();
             //             m_diffractionCollisionPackets.push_back(DiffractionCollisionPacket(firstEndPoint, lineDir, particleDir));
@@ -728,11 +728,11 @@ namespace Farlor
                     
             //         if (PointInTriangle(secondEndPoint, B, D, E))
             //         {
-            //             cout << "Second" << endl;
-            //             cout << "Point: " << secondEndPoint << endl;
-            //             cout << "B: " << B << endl;
-            //             cout << "D: " << D << endl;
-            //             cout << "E: " << E << endl;
+            //             std::cout << "Second" << std::endl;
+            //             std::cout << "Point: " << secondEndPoint << std::endl;
+            //             std::cout << "B: " << B << std::endl;
+            //             std::cout << "D: " << D << std::endl;
+            //             std::cout << "E: " << E << std::endl;
             //             Vector2 lineDir = firstEndPoint - secondEndPoint;
             //             lineDir = lineDir.Normalized();
             //             m_diffractionCollisionPackets.push_back(DiffractionCollisionPacket(secondEndPoint, lineDir, particleDir));
@@ -741,18 +741,18 @@ namespace Farlor
 
             //     if (m_diffractionCollisionPackets.size() > 0)
             //     {
-            //         cout << "We had a collisions" << endl;
+            //         std::cout << "We had a collisions" << std::endl;
 
             //         for (auto itr = m_diffractionCollisionPackets.begin(); itr != m_diffractionCollisionPackets.end(); ++itr)
             //         {
-            //             cout << "Collision with obstacle end point: " << itr->m_endPoint << endl;
-            //             cout << "Obstacle direction: " << itr->m_obstacleDir << endl;
-            //             cout << "ParticleDir: " << itr->m_particleDir << endl;
+            //             std::cout << "Collision with obstacle end point: " << itr->m_endPoint << std::endl;
+            //             std::cout << "Obstacle direction: " << itr->m_obstacleDir << std::endl;
+            //             std::cout << "ParticleDir: " << itr->m_particleDir << std::endl;
 
             //             // We need to spawn a new particle for this collision
             //             // First, lets identify the dispersion angle
             //             float diffractionDispersionAngle = acos(itr->m_obstacleDir.Dot(itr->m_particleDir));
-            //             cout << "New dispersion angle: " << diffractionDispersionAngle << endl;
+            //             std::cout << "New dispersion angle: " << diffractionDispersionAngle << std::endl;
 
             //             // float tempAngle = DEGREE_TO_RAD(130);
             //             // if (diffractionDispersionAngle >= tempAngle)
@@ -784,21 +784,21 @@ namespace Farlor
                 float angleOwned = m_waveParticles[i].m_dispersionAngle;
                 float halfAngleOwned = angleOwned / 2.0f;
                 Vector3 distanceMoved = (m_waveParticles[i].m_direction * ((float)g_TimerGame.TotalTime() - m_waveParticles[i].m_birthTime));
-                // cout << "Distance Moved" << distanceMoved << endl;
+                // std::cout << "Distance Moved" << distanceMoved << std::endl;
                 float totalDistanceMoved = distanceMoved.Magnitude();
                 float distanceBetweenParticles = 2.0f * totalDistanceMoved * sin(halfAngleOwned);
 
                 int numSubdividing = 0;
 
-                // cout << "Distance Moved: " << distanceMoved.Magnitude() << endl;
+                // std::cout << "Distance Moved: " << distanceMoved.Magnitude() << std::endl;
                 // Perform subdivide
                 if (distanceBetweenParticles > (m_waveParticles[i].m_particleSize / 2.0f))
                 {
-                    // cout << "Particle Subdividing: " << i << endl;
-                    // cout << "AngleOwned: " << angleOwned << endl;
-                    // cout << "i" << i << endl;
-                    // cout << "Performing Subdivide" << endl;
-                    // cout << "Subdivide" << endl;
+                    // std::cout << "Particle Subdividing: " << i << std::endl;
+                    // std::cout << "AngleOwned: " << angleOwned << std::endl;
+                    // std::cout << "i" << i << std::endl;
+                    // std::cout << "Performing Subdivide" << std::endl;
+                    // std::cout << "Subdivide" << std::endl;
                     numSubdividing++;
 
                     // m_waveParticles[i].m_active = true;
@@ -809,7 +809,7 @@ namespace Farlor
                     float angle = origionalAngle/2.0f * (2.0f/3.0f);
                     float negAngle = -1.0f * angle;
 
-                    // cout << "Angle: " << angle << endl;
+                    // std::cout << "Angle: " << angle << std::endl;
 
                     float xLeft = direction.x * cos(angle) - direction.y * sin(angle);
                     float yLeft = direction.y * cos(angle) + direction.x * sin(angle);
@@ -823,13 +823,13 @@ namespace Farlor
                     Vector2 right(xRight, yRight);
                     right = right.Normalized() * speed;
 
-                    // cout << "Origional Direction: " << direction << endl;
-                    // cout << "Left Direction: <" << left.x << ", " << left.y << ">" << endl;
-                    // cout << "Right Direction: <" << right.x << ", " << right.y << ">" << endl;
+                    // std::cout << "Origional Direction: " << direction << std::endl;
+                    // std::cout << "Left Direction: <" << left.x << ", " << left.y << ">" << std::endl;
+                    // std::cout << "Right Direction: <" << right.x << ", " << right.y << ">" << std::endl;
 
                     // cin.get();
 
-                    // cout << "Origional Particle Current Position: " << m_waveParticles[i].m_currentPosition << endl;
+                    // std::cout << "Origional Particle Current Position: " << m_waveParticles[i].m_currentPosition << std::endl;
 
                     WaveParticle particleLeft = WaveParticle(pos, Vector3(left.x, left.y, 0.0f), m_waveParticles[i].m_birthTime, m_waveParticles[i].m_particleSize);
                     WaveParticle particleRight = WaveParticle(pos, Vector3(right.x, right.y, 0.0f), m_waveParticles[i].m_birthTime, m_waveParticles[i].m_particleSize);
@@ -839,8 +839,8 @@ namespace Farlor
                     particleRight.m_currentPosition = particleRight.m_birthPosition + particleRight.m_direction * timeMoved;
                     particleSame.m_currentPosition = particleSame.m_birthPosition + particleSame.m_direction * timeMoved;
 
-                    // cout << "Left Current Position: " <<  particleLeft.m_currentPosition << endl;
-                    // cout << "Right Current Position: " << particleRight.m_currentPosition << endl;
+                    // std::cout << "Left Current Position: " <<  particleLeft.m_currentPosition << std::endl;
+                    // std::cout << "Right Current Position: " << particleRight.m_currentPosition << std::endl;
 
 
                     particleLeft.m_dispersionAngle = origionalAngle / 3.0f;
@@ -864,20 +864,20 @@ namespace Farlor
             m_waveParticles[i].m_amplitude = m_waveParticles[i].m_amplitude - (g_amplitudeDropRate * timeMoved);
 
             m_waveParticles[i].m_timeMoved = timeMoved;
-            // cout << "Num subdivided: " << numSubdividing << endl;
+            // std::cout << "Num subdivided: " << numSubdividing << std::endl;
         }
 
         for (int i = 0; i < m_newParticles.size(); i++)
         {
-            // cout << "Adding particle" << endl;
+            // std::cout << "Adding particle" << std::endl;
             AddParticle(m_newParticles[i]);
         }
 
-        // cout << "New Particle Number: " << m_numActualParticles << endl;
+        // std::cout << "New Particle Number: " << m_numActualParticles << std::endl;
 
         KillParticles();
 
-        // cout << "Number of particles: " << m_numActualParticles << endl;
+        // std::cout << "Number of particles: " << m_numActualParticles << std::endl;
     }
 
     void ParticleSystem::KillParticles()
@@ -888,10 +888,10 @@ namespace Farlor
         {
             if (m_waveParticles[i].m_active && m_waveParticles[i].m_amplitude <= 0.05f)
             {
-                // cout << "Killing particle" << endl;
+                // std::cout << "Killing particle" << std::endl;
                 m_waveParticles[i].m_active = false;
 
-                // cout << "Killing Particle" << endl;
+                // std::cout << "Killing Particle" << std::endl;
                 // Shift all particles over
                 for (int j = i; j < (m_maxParticles-1); j++)
                 {
@@ -907,17 +907,17 @@ namespace Farlor
                     m_waveParticles[j].m_active = m_waveParticles[j + 1].m_active;
 
                     m_waveParticles[j+1].m_active = false;
-                    // cout << "Killing particle: " << endl;
+                    // std::cout << "Killing particle: " << std::endl;
                 }
                 m_numActualParticles--;
-                // cout << "Removed Particle" << endl;
+                // std::cout << "Removed Particle" << std::endl;
             }
             else
             {
                 i++;
             }
         }
-        // cout << "Killed off: " << (numBefore - m_numActualParticles) << endl;
+        // std::cout << "Killed off: " << (numBefore - m_numActualParticles) << std::endl;
     }
 
     void ParticleSystem::InitializeBuffers(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext)
@@ -954,7 +954,7 @@ namespace Farlor
         result = pDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer);
         if (FAILED(result))
         {
-            cout << "Failed to create vertex buffer" << endl;
+            std::cout << "Failed to create vertex buffer" << std::endl;
             return;
         }
 
@@ -971,7 +971,7 @@ namespace Farlor
         result = pDevice->CreateBuffer(&indexBufferDesc, &indexData, &m_indexBuffer);
         if (FAILED(result))
         {
-            cout << "Failed to create index buffer" << endl;
+            std::cout << "Failed to create index buffer" << std::endl;
             return;
         }
 
@@ -984,34 +984,34 @@ namespace Farlor
         ID3DBlob* pixelShaderBuffer = nullptr;
         D3D11_BUFFER_DESC matrixBufferDesc = {0};
 
-        wstring vertexShaderName = L"resources/shaders/PositionUV.hlsl";
-        wstring pixelShaderName = L"resources/shaders/PositionUV.hlsl";
+        std::wstring vertexShaderName = L"resources/shaders/PositionUV.hlsl";
+        std::wstring pixelShaderName = L"resources/shaders/PositionUV.hlsl";
 
         result = D3DCompileFromFile(vertexShaderName.c_str(), 0, 0, "VSMain", "vs_5_0", 0, 0, &vertexShaderBuffer, &errorMessage);
         if (FAILED(result))
         {
-            cout << "Failed to compile vertex shader" << endl;
+            std::cout << "Failed to compile vertex shader" << std::endl;
             return;
         }
 
         result = D3DCompileFromFile(pixelShaderName.c_str(), 0, 0, "PSMain", "ps_5_0", 0, 0, &pixelShaderBuffer, &errorMessage);
         if (FAILED(result))
         {
-            cout << "Failed to compile ball pixel shader" << endl;
+            std::cout << "Failed to compile ball pixel shader" << std::endl;
             return;
         }
 
         result = pDevice->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), 0, &m_pVertexShader);
         if (FAILED(result))
         {
-            cout << "Failed to createe ball vertex shader" << endl;
+            std::cout << "Failed to createe ball vertex shader" << std::endl;
             return;
         }
 
         result = pDevice->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), 0, &m_pPixelShader);
         if (FAILED(result))
         {
-            cout << "Failed to create ball pixel shader" << endl;
+            std::cout << "Failed to create ball pixel shader" << std::endl;
             return;
         }
 
@@ -1022,7 +1022,7 @@ namespace Farlor
 
         if (FAILED(result))
         {
-            cout << "Failed to create input layout" << endl;
+            std::cout << "Failed to create input layout" << std::endl;
         }
 
         // Create constatnt buffer
@@ -1036,7 +1036,7 @@ namespace Farlor
         result = pDevice->CreateBuffer(&cbd, 0, &m_cbPerObjectBuffer);
         if (FAILED(result))
         {
-            cout << "Failed to create constant buffer layout" << endl;
+            std::cout << "Failed to create constant buffer layout" << std::endl;
         }
 
         // Set raster desc
@@ -1056,7 +1056,7 @@ namespace Farlor
         result = pDevice->CreateRasterizerState(&rasterDesc, &m_rasterState);
         if (FAILED(result))
         {
-            cout << "Failed to create raster state" << endl;
+            std::cout << "Failed to create raster state" << std::endl;
         }
     }
 
@@ -1151,7 +1151,7 @@ namespace Farlor
         result = pDeviceContext->Map(m_vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedVertices);
         if (FAILED(result))
         {
-            cout << "Failed to map resource" << endl;
+            std::cout << "Failed to map resource" << std::endl;
             return;
         }
 

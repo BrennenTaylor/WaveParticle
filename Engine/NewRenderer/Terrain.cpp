@@ -28,36 +28,36 @@ namespace Farlor
         ID3DBlob* pixelShaderBuffer = nullptr;
         D3D11_BUFFER_DESC matrixBufferDesc = {0};
 
-        wstring vertexShaderName = L"resources/shaders/RenderHeightmap.hlsl";
-        wstring pixelShaderName = L"resources/shaders/RenderHeightmap.hlsl";
+        std::wstring vertexShaderName = L"resources/shaders/RenderHeightmap.hlsl";
+        std::wstring pixelShaderName = L"resources/shaders/RenderHeightmap.hlsl";
 
         result = D3DCompileFromFile(vertexShaderName.c_str(), 0, 0, "VSMain", "vs_5_0", 0, 0, &vertexShaderBuffer, &errorMessage);
         if (FAILED(result))
         {
-            cout << "Failed to compile vertex shader" << endl;
-            cout << (char*)errorMessage->GetBufferPointer() << endl;
+            std::cout << "Failed to compilesky vertex shader" << std::endl;
+            std::cout << (char*)errorMessage->GetBufferPointer() << std::endl;
             return;
         }
 
         result = D3DCompileFromFile(pixelShaderName.c_str(), 0, 0, "PSMain", "ps_5_0", 0, 0, &pixelShaderBuffer, &errorMessage);
         if (FAILED(result))
         {
-            cout << "Failed to compile pixel shader" << endl;
-            cout << (char*)errorMessage->GetBufferPointer() << endl;
+            std::cout << "Failed to compile pixel shader" << std::endl;
+            std::cout << (char*)errorMessage->GetBufferPointer() << std::endl;
             return;
         }
 
         result = pDevice->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), 0, &m_pPositionColorVertexShader);
         if (FAILED(result))
         {
-            cout << "Failed to create ball vertex shader" << endl;
+            std::cout << "Failed to create ball vertex shader" << std::endl;
             return;
         }
 
         result = pDevice->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), 0, &m_pPositionColorPixelShader);
         if (FAILED(result))
         {
-            cout << "Failed to create ball pixel shader" << endl;
+            std::cout << "Failed to create ball pixel shader" << std::endl;
             return;
         }
 
@@ -68,7 +68,7 @@ namespace Farlor
 
         if (FAILED(result))
         {
-            cout << "Failed to create input layout" << endl;
+            std::cout << "Failed to create input layout" << std::endl;
         }
 
         // Create constatnt buffer
@@ -82,7 +82,7 @@ namespace Farlor
         result = pDevice->CreateBuffer(&cbd, 0, &m_cbPerObjectBuffer);
         if (FAILED(result))
         {
-            cout << "Failed to create constant buffer layout" << endl;
+            std::cout << "Failed to create constant buffer layout" << std::endl;
         }
 
         InitializeBuffers(pDevice, pDeviceContext);
@@ -261,7 +261,7 @@ namespace Farlor
         result = pDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &m_pVertexBuffer);
         if (FAILED(result))
         {
-            cout << "Failed to create terrain vertex buffer" << endl;
+            std::cout << "Failed to create terrain vertex buffer" << std::endl;
         }
 
         D3D11_BUFFER_DESC indexBufferDesc;
@@ -282,7 +282,7 @@ namespace Farlor
         result = pDevice->CreateBuffer(&indexBufferDesc, &indexData, &m_pIndexBuffer);
         if (FAILED(result))
         {
-            cout << "Failed to create terrain index buffer" << endl;
+            std::cout << "Failed to create terrain index buffer" << std::endl;
         }
 
         delete[] vertices;

@@ -71,7 +71,7 @@ namespace Farlor
         friend const FastVector operator*(float lhs, const FastVector& rhs);
 
         // Out Streaming
-        friend ostream& operator<<(ostream& os, FastVector& vec);
+        friend std::ostream& operator<<(std::ostream& os, FastVector& vec);
 
         // Local Math Operations
         FastFloat Magnitude();

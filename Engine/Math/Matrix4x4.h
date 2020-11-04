@@ -38,6 +38,6 @@ namespace Farlor
         Matrix4x4(FastMatrix& fastMatrix);
 
         // Out Streaming
-        friend ostream& operator<<(ostream& os, const Matrix4x4& mat);
+        friend std::ostream& operator<<(std::ostream& os, const Matrix4x4& mat);
     };
 }
