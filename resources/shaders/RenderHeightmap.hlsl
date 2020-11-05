@@ -69,12 +69,11 @@ float4 PSMain(PS_INPUT input) : SV_TARGET
     float3 norm = normalize(input.normal);
 
     // Directional Light
-    float attenuation = 1.0f;
     float3 lightDir = normalize(float3(1.0f, -1.0f, 1.0f));
     float3 L = -lightDir;
 
     float nDotL = saturate(dot(input.normal, L));
     float3 diffuse = nDotL * float3(0.0f, 1.0f, 1.0f);
 
-    return float4(diffuse * attenuation, 1.0f);
+    return float4(diffuse, 1.0f);
 }
