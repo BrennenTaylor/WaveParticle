@@ -433,7 +433,7 @@ namespace Farlor
 
         // ensure that our particle system and terrain systems initialized
         g_WaveParticles.InitializeBuffers(m_pDevice, m_pDeviceContext);
-        m_terrain.Initialize(100, 100, m_pDevice, m_pDeviceContext);
+        m_waterSurface.Initialize(100, 100, m_pDevice, m_pDeviceContext);
     }
 
     void Renderer::Render()
@@ -466,7 +466,7 @@ namespace Farlor
         // m_pDeviceContext->Unmap(m_pWaveParticleStagingResource, 0);
         //
         //
-        // m_terrain.UpdateMesh(m_pHeightmapPositions);
+        // m_waterSurface.UpdateMesh(m_pHeightmapPositions);
 
         m_camView = g_MainCamera.m_camView;
 
@@ -543,8 +543,7 @@ namespace Farlor
         // m_pDeviceContext->RSSetState(m_rasterState);
 
         m_pDeviceContext->RSSetState(m_rasterStateNoCull);
-        m_terrain.Render(m_pDevice, m_pDeviceContext, m_pWPSRView, m_pWPSampleState);
-
+        m_waterSurface.Render(m_pDevice, m_pDeviceContext, m_pWPSRView, m_pWPSampleState);
 
         m_pSwapChain->Present(0, 0);
     }

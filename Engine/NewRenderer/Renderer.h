@@ -26,7 +26,7 @@
 
 
 //// Wave Particle Stuff
-#include "Terrain.h"
+#include "HeightField.h"
 //
 #include <DirectXMath.h>
 
@@ -134,9 +134,9 @@ class Renderer
 
         ID3D11DepthStencilState * pDSState;
 
-        Terrain m_terrain;
+        HeightField m_waterSurface;
 
-        Vector4 *m_pHeightmapPositions;
+        Vector4* m_pHeightmapPositions;
 
 
         static std::map<std::string, RenderResourceType> s_stringToTypeMapping;

@@ -1,6 +1,6 @@
 cbuffer cbPerObject
 {
-	float4x4 WVP;
+    float4x4 WVP;
 };
 
 struct VS_INPUT
@@ -10,74 +10,71 @@ struct VS_INPUT
     float2 uv : TEXCOORD;
 };
 
-
 struct PS_INPUT
 {
     float4 color : COLOR;
-	float4 position : SV_POSITION;
-	float3 normal : NORMALS;
+    float4 position : SV_POSITION;
+    float3 normal : NORMALS;
     float amplitude : AMPLITUDE;
 };
 
-Texture2D MainTexture;
-SamplerState MainTextureSamplerState;
+Texture2D ParticleTexture;
+SamplerState ParticleTextureSamplerState;
 
+// For now, we simply project full texture map to entire grid
 PS_INPUT VSMain(VS_INPUT input)
 {
-	PS_INPUT output;
+    PS_INPUT output;
+    // No change here
     float3 newPos = input.position;
-    float3 readSample = MainTexture.SampleLevel(MainTextureSamplerState, input.uv, 0).xyz;
-    newPos.y = readSample.y * 5;
+    float3 readSample = ParticleTexture.SampleLevel(ParticleTextureSamplerState, input.uv, 0).xyz;
+    newPos.y = readSample.y;
 
-	float small = 1.0f/500.0f;
+    float small = 1.0f / 1000.0f;
 
-    float2 leftUV = float2(input.uv.x - small, input.uv.y);
-    float2 rightUV = float2(input.uv.x + small, input.uv.y);
+    float2 leftSampleUV = float2(input.uv.x - small, input.uv.y);
+    float2 rightSampleUV = float2(input.uv.x + small, input.uv.y);
 
-    float2 topUV = float2(input.uv.x, input.uv.y - small);
-    float2 bottomUV = float2(input.uv.x, input.uv.y + small);
+    float2 topSampleUV = float2(input.uv.x, input.uv.y - small);
+    float2 bottomSampleUV = float2(input.uv.x, input.uv.y + small);
 
-	float3 leftCol = MainTexture.SampleLevel(MainTextureSamplerState, leftUV, 0).xyz;
-	float3 rightCol = MainTexture.SampleLevel(MainTextureSamplerState, rightUV, 0).xyz;
+    float3 leftSample = ParticleTexture.SampleLevel(ParticleTextureSamplerState, leftSampleUV, 0).xyz;
+    float3 rightSample = ParticleTexture.SampleLevel(ParticleTextureSamplerState, rightSampleUV, 0).xyz;
 
-	float3 topCol = MainTexture.SampleLevel(MainTextureSamplerState, topUV, 0).xyz;
-    float3 bottomCol = MainTexture.SampleLevel(MainTextureSamplerState, bottomUV, 0).xyz;
+    float3 topSample = ParticleTexture.SampleLevel(ParticleTextureSamplerState, topSampleUV, 0).xyz;
+    float3 bottomSample = ParticleTexture.SampleLevel(ParticleTextureSamplerState, bottomSampleUV, 0).xyz;
 
-	float3 left = float3(leftUV.x * 100, leftCol.y * 5, leftUV.y * 100);
-	float3 right = float3(rightUV.x * 100, rightCol.y *5, rightUV.y * 100);
-	float3 top = float3(topUV.x * 100, topCol.y*5, topUV.y * 100);
-	float3 bottom = float3(bottomUV.x * 100, bottomCol.y*5, bottomUV.y * 100);
 
-	float3 xNorm =  right - left;
-	float3 zNorm =  bottom - top;
-	output.normal = normalize(cross(zNorm, xNorm));
+    // NOTE: The 100 here is the grid size in the x and y direction. This allows us to calculate the positions required for the normal
+    float3 left = float3(leftSampleUV.x * 100, leftSample.y, leftSampleUV.y * 100);
+    float3 right = float3(rightSampleUV.x * 100, rightSample.y, rightSampleUV.y * 100);
+    float3 top = float3(topSampleUV.x * 100,  topSample.y, topSampleUV.y * 100);
+    float3 bottom = float3(bottomSampleUV.x * 100, bottomSample.y, bottomSampleUV.y * 100);
 
-	// Calculate normals
-	//output.normal = float3(0.0f, 1.0f, 0.0f);
+    float3 xNorm =  right - left;
+    float3 zNorm =  bottom - top;
 
-	output.amplitude = newPos.y;
+    // NOTE: We dont need to project this because we dont do a world matrix transform on the grid
+    output.normal = normalize(cross(zNorm, xNorm));
 
-	output.position = mul(float4(newPos, 1.0f), WVP);
-    //output.normal = mul(float4(output.normal, 1.0f), WVP);
-    //output.normal = normalize(output.norm);
+    output.amplitude = newPos.y;
+
+    output.position = mul(float4(newPos, 1.0f), WVP);
     output.color = input.color;
-	return output;
+    return output;
 }
 
 float4 PSMain(PS_INPUT input) : SV_TARGET
 {
-	float3 norm = normalize(input.normal);
+    float3 norm = normalize(input.normal);
 
     // Directional Light
     float attenuation = 1.0f;
-    float3 lightDir = float3(0.0f, -0.7f, -1.0f);
+    float3 lightDir = normalize(float3(1.0f, -1.0f, 1.0f));
     float3 L = -lightDir;
 
     float nDotL = saturate(dot(input.normal, L));
     float3 diffuse = nDotL * float3(0.0f, 1.0f, 1.0f);
 
     return float4(diffuse * attenuation, 1.0f);
-
-	//return float4(norm, 1.0f);
-	//return (1.0f - input.amplitude) * float4(1.0f, 1.0f, 1.0f, 1.0f) + (input.amplitude * float4(0.0f, 0.0f, 1.0f, 1.0f));
 }

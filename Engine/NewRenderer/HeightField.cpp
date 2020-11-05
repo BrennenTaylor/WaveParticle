@@ -1,17 +1,19 @@
 // NOTE: For some fucking reason this must be included before any d3d11 stuff gets included. Why you ask? No clue.
 #include <d3dcompiler.h>
-#include "Terrain.h"
+#include "HeightField.h"
 
 #include "Renderer.h"
 #include "Vertex.h"
 
 #include <DirectXMath.h>
 
+#include "../Util/Logger.h"
+
 namespace Farlor
 {
     extern Renderer g_RenderingSystem;
 
-    Terrain::Terrain()
+    HeightField::HeightField()
         : m_width{0}
         , m_height{0}
         , m_vertexCount{0}
@@ -26,58 +28,63 @@ namespace Farlor
     {
     }
 
-    void Terrain::Initialize(int width, int height, ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext)
+    void HeightField::Initialize(int width, int height, ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext)
     {
-        HRESULT result;
+        HRESULT result = ERROR_SUCCESS;
+
+        // Bottom left corner is at 0, 0
+        // Top right is (m_width, m_height)
+        // For mapping purposes, bottom left uv is (0, 0)
+        // Top right is (1, 1)
         m_width = width;
         m_height = height;
 
-        ID3DBlob* errorMessage = nullptr;
-        ID3DBlob* vertexShaderBuffer = nullptr;
-        ID3DBlob* pixelShaderBuffer = nullptr;
+        ID3DBlob* pErrorMessage = nullptr;
+        ID3DBlob* pVertexShaderBuffer = nullptr;
+        ID3DBlob* pPixelShaderBuffer = nullptr;
         D3D11_BUFFER_DESC matrixBufferDesc = {0};
 
         std::wstring vertexShaderName = L"resources/shaders/RenderHeightmap.hlsl";
         std::wstring pixelShaderName = L"resources/shaders/RenderHeightmap.hlsl";
 
-        result = D3DCompileFromFile(vertexShaderName.c_str(), 0, 0, "VSMain", "vs_5_0", 0, 0, &vertexShaderBuffer, &errorMessage);
+        result = D3DCompileFromFile(vertexShaderName.c_str(), 0, 0, "VSMain", "vs_5_0", 0, 0, &pVertexShaderBuffer, &pErrorMessage);
         if (FAILED(result))
         {
-            std::cout << "Failed to compilesky vertex shader" << std::endl;
-            std::cout << (char*)errorMessage->GetBufferPointer() << std::endl;
+            FARLOR_LOG_ERROR("Failed to compile vertex shader: resources/shaders/RenderHeightmap.hlsl")
+            FARLOR_LOG_ERROR((char*)pErrorMessage->GetBufferPointer())
             return;
         }
 
-        result = D3DCompileFromFile(pixelShaderName.c_str(), 0, 0, "PSMain", "ps_5_0", 0, 0, &pixelShaderBuffer, &errorMessage);
+        result = D3DCompileFromFile(pixelShaderName.c_str(), 0, 0, "PSMain", "ps_5_0", 0, 0, &pPixelShaderBuffer, &pErrorMessage);
         if (FAILED(result))
         {
-            std::cout << "Failed to compile pixel shader" << std::endl;
-            std::cout << (char*)errorMessage->GetBufferPointer() << std::endl;
+            FARLOR_LOG_ERROR("Failed to compile pixel shader: resources/shaders/RenderHeightmap.hlsl")
+            FARLOR_LOG_ERROR((char*)pErrorMessage->GetBufferPointer())
             return;
         }
 
-        result = pDevice->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), 0, &m_pPositionColorVertexShader);
+        result = pDevice->CreateVertexShader(pVertexShaderBuffer->GetBufferPointer(), pVertexShaderBuffer->GetBufferSize(), 0, &m_pPositionColorVertexShader);
         if (FAILED(result))
         {
-            std::cout << "Failed to create ball vertex shader" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create vertex shader: resources/shaders/RenderHeightmap.hlsl")
             return;
         }
 
-        result = pDevice->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), 0, &m_pPositionColorPixelShader);
+        result = pDevice->CreatePixelShader(pPixelShaderBuffer->GetBufferPointer(), pPixelShaderBuffer->GetBufferSize(), 0, &m_pPositionColorPixelShader);
         if (FAILED(result))
         {
-            std::cout << "Failed to create ball pixel shader" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create pixel shader: resources/shaders/RenderHeightmap.hlsl")
             return;
         }
 
         // Create input layout
         result = pDevice->CreateInputLayout(VertexPositionColorUV::s_layout, VertexPositionColorUV::s_numElements,
-            vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(),
+            pVertexShaderBuffer->GetBufferPointer(), pVertexShaderBuffer->GetBufferSize(),
             &m_pPositionColorInputLayout);
 
         if (FAILED(result))
         {
-            std::cout << "Failed to create input layout" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create input layout: VertexPositionColorUV::s_layout")
         }
 
         // Create constatnt buffer
@@ -91,13 +98,13 @@ namespace Farlor
         result = pDevice->CreateBuffer(&cbd, 0, &m_cbPerObjectBuffer);
         if (FAILED(result))
         {
-            std::cout << "Failed to create constant buffer layout" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create ParticleSystem::cbPerObject: HeightField")
         }
 
         InitializeBuffers(pDevice, pDeviceContext);
     }
 
-    void Terrain::Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext, ID3D11ShaderResourceView* pWSRView, ID3D11SamplerState* pWPSampleState)
+    void HeightField::Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext, ID3D11ShaderResourceView* pWSRView, ID3D11SamplerState* pWPSampleState)
     {
         unsigned int stride = sizeof(VertexPositionColorUV);
         unsigned int offset = 0;
@@ -106,6 +113,8 @@ namespace Farlor
         pDeviceContext->PSSetShader(m_pPositionColorPixelShader, 0, 0);
         pDeviceContext->IASetInputLayout(m_pPositionColorInputLayout);
 
+        // Dont move grid at all for now
+        // TODO: Attach this to camera possibly
         DirectX::XMMATRIX world = DirectX::XMMatrixIdentity();
         DirectX::XMMATRIX wvp = world * g_RenderingSystem.m_camView * g_RenderingSystem.m_camProjection;
 
@@ -123,24 +132,21 @@ namespace Farlor
         pDeviceContext->DrawIndexed(m_indexCount, 0, 0);
     }
 
-    void Terrain::UpdateMesh(Vector4 *pPositions)
+    void HeightField::InitializeBuffers(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext)
     {
-        int numSubX = 500;
-        int numSubZ = 500;
-    }
+        HRESULT result = ERROR_SUCCESS;
 
-    void Terrain::InitializeBuffers(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext)
-    {
-        HRESULT result;
-
+        // Number of grid cells within mesh?
         int numSubX = 500;
         int numSubZ = 500;
 
-        m_vertexCount = (numSubX - 1) * (numSubZ - 1) * 8;
+        // Only 6 verts per square, and (x-1)*(z-1) squares
+        // TODO: Optimize this to reuse vertices
+        m_vertexCount = (numSubX - 1) * (numSubZ - 1) * 6;
         m_indexCount = m_vertexCount;
 
-        VertexPositionColorUV* vertices = new VertexPositionColorUV[m_vertexCount];
-        unsigned int* indices = new unsigned int[m_indexCount];
+        VertexPositionColorUV* pRawVertices = new VertexPositionColorUV[m_vertexCount];
+        unsigned int* pRawIndices = new unsigned int[m_indexCount];
 
         int index = 0;
         float positionX = 0.0f;
@@ -156,10 +162,10 @@ namespace Farlor
                 positionX = (positionX/numSubX)*m_width;
                 positionZ = (positionZ/numSubZ)*m_height;
 
-    			vertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-    			vertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                vertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/m_height);
-                indices[index] = index;
+                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/m_height);
+                pRawIndices[index] = index;
     			index++;
 
     			// Upper right.
@@ -168,11 +174,10 @@ namespace Farlor
                 positionX = (positionX/numSubX)*m_width;
                 positionZ = (positionZ/numSubZ)*m_height;
 
-
-    			vertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-    			vertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                vertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-                indices[index] = index;
+                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
+                pRawIndices[index] = index;
     			index++;
 
     			// LINE 2
@@ -193,10 +198,10 @@ namespace Farlor
                 positionZ = (positionZ/numSubZ)*m_height;
 
 
-    			vertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-    			vertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                vertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-    			indices[index] = index;
+                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
+                pRawIndices[index] = index;
     			index++;
 
     			// LINE 3
@@ -207,10 +212,10 @@ namespace Farlor
                 positionZ = (positionZ/numSubZ)*m_height;
 
 
-    			vertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-    			vertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                vertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-    			indices[index] = index;
+                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
+                pRawIndices[index] = index;
     			index++;
 
     			// Bottom left.
@@ -231,10 +236,10 @@ namespace Farlor
                 positionZ = (positionZ/numSubZ)*m_height;
 
 
-    			vertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-    			vertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                vertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-    			indices[index] = index;
+                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
+                pRawIndices[index] = index;
     			index++;
 
     			// Upper left.
@@ -244,10 +249,10 @@ namespace Farlor
                 positionZ = (positionZ/numSubZ)*m_height;
 
 
-    			vertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-    			vertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                vertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-    			indices[index] = index;
+                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
+                pRawIndices[index] = index;
     			index++;
             }
         }
@@ -263,14 +268,14 @@ namespace Farlor
 
         D3D11_SUBRESOURCE_DATA vertexData;
         ZeroMemory(&vertexData, sizeof(vertexData));
-        vertexData.pSysMem = vertices;
+        vertexData.pSysMem = pRawVertices;
     	vertexData.SysMemPitch = 0;
     	vertexData.SysMemSlicePitch = 0;
 
         result = pDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &m_pVertexBuffer);
         if (FAILED(result))
         {
-            std::cout << "Failed to create terrain vertex buffer" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create HeightField vertex buffer")
         }
 
         D3D11_BUFFER_DESC indexBufferDesc;
@@ -284,19 +289,19 @@ namespace Farlor
 
         D3D11_SUBRESOURCE_DATA indexData;
         ZeroMemory(&indexData, sizeof(indexData));
-        indexData.pSysMem = indices;
+        indexData.pSysMem = pRawIndices;
     	indexData.SysMemPitch = 0;
     	indexData.SysMemSlicePitch = 0;
 
         result = pDevice->CreateBuffer(&indexBufferDesc, &indexData, &m_pIndexBuffer);
         if (FAILED(result))
         {
-            std::cout << "Failed to create terrain index buffer" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create HeightField index buffer")
         }
 
-        delete[] vertices;
-        vertices = nullptr;
-        delete[] indices;
-        indices = nullptr;
+        delete[] pRawVertices;
+        pRawVertices = nullptr;
+        delete[] pRawIndices;
+        pRawIndices = nullptr;
     }
 }
