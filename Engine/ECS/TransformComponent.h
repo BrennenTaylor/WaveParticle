@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Math/Math.h"
+#include "Math/Vector3.h"
 
 #include "../ECS/Entity.h"
 

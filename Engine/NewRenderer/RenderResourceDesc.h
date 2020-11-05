@@ -1,9 +1,9 @@
 #pragma once
 
-#include <string>
-
 #include "RenderResourceFormat.h"
 #include "RenderResourceType.h"
+
+#include <string>
 
 namespace Farlor
 {

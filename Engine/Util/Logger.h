@@ -1,16 +1,19 @@
 #pragma once
 
+#define SPDLOG_FMT_EXTERNAL
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 #include <iostream>
 
+#define ENABLE_LOGGING
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(ENABLE_LOGGING)
 
 #define FARLOR_LOG_STARTUP_STDOUT() \
     try\
     {\
-        spdlog::stdout_color_mt("console");\
+        spdlog::basic_logger_mt("console");\
     }\
     catch (const spdlog::spdlog_ex& ex)\
     {\

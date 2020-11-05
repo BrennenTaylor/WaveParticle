@@ -12,6 +12,7 @@ int main(int argc, char** argv)
 {
     Farlor::EngineConfig config = {};
 
+    // TODO: Remove tclap and use something else. We want to not have exceptions here.
     try
     {
         // Create the interpreter
@@ -49,7 +50,6 @@ int main(int argc, char** argv)
     {
         std::filesystem::create_directories("E:/Log/");
     }
-
     FARLOR_LOG_STARTUP_SIMPLE_FILE("E:/Log/WaveParticle.txt")
 
     FARLOR_LOG_INFO("Info")

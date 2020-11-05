@@ -1,8 +1,8 @@
 #pragma once
 
-#include <DirectXMath.h>
-
 #include "..\Math\Math.h"
+
+#include <DirectXMath.h>
 
 namespace Farlor
 {

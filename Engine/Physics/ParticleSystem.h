@@ -1,21 +1,43 @@
 #pragma once
 
-#include <vector>
-
-#include "Particle.h"
-
 #include "../NewRenderer/Vertex.h"
 
 #include "../Physics/Plane.h"
 #include "../Physics/LineSegment.h"
 
+#include "Math/Math.h"
+
 #include <DirectXMath.h>
+
+#include <vector>
 
 namespace Farlor
 {
     class ParticleSystem
     {
     public:
+
+        struct WaveParticle
+        {
+            Vector3 m_birthPosition; // Tracks where particle was first created
+            Vector3 m_currentPosition; // Tracks where the particle currently is in physical sim
+
+            Vector3 m_direction; // Tracks direction of particle travel
+
+            float m_amplitude; // How much energy is in the particle? Usually the center of the particle is full amplitude
+            float m_dispersionAngle; // What angle of space is the particle covering, i.e. angle of circle based ripple covered by this particle
+
+            float m_birthTime; // Time particle was created at
+            float m_particleSize; // How big is the thing?
+            bool m_active; // Is the particle active?
+
+            float m_timeMoved; // How long has the thing moved
+
+            WaveParticle(const Vector3& birthPos, const Vector3& direction, float birthTime, float size = 20.0f, bool isActive = false);
+
+            bool ShouldKill();
+        };
+
         struct cbPerObject
         {
             DirectX::XMMATRIX WVP;
@@ -52,19 +74,19 @@ namespace Farlor
         int m_vertexCount;
         int m_indexCount;
 
-        WaveParticleVertex* m_vertices;
-        unsigned int* m_indices;
-        ID3D11Buffer* m_vertexBuffer;
-        ID3D11Buffer* m_indexBuffer;
+        WaveParticleVertex* m_vertices = nullptr;
+        unsigned int* m_indices = nullptr;
+        ID3D11Buffer* m_pVertexBuffer = nullptr;
+        ID3D11Buffer* m_pIndexBuffer = nullptr;
 
-        ID3D11VertexShader* m_pVertexShader;
-        ID3D11PixelShader* m_pPixelShader;
+        ID3D11VertexShader* m_pVertexShader = nullptr;
+        ID3D11PixelShader* m_pPixelShader = nullptr;
 
-        ID3D11InputLayout* m_inputLayout;
+        ID3D11InputLayout* m_inputLayout = nullptr;
 
-        ID3D11Buffer* m_cbPerObjectBuffer;
+        ID3D11Buffer* m_cbPerObjectBuffer = nullptr;
         cbPerObject m_cbPerObject;
 
-        ID3D11RasterizerState* m_rasterState;
+        ID3D11RasterizerState* m_rasterState = nullptr;
     };
 }

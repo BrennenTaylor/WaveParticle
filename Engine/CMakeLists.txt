@@ -1,5 +1,6 @@
 set(CMAKE_CXX_STANDARD 17)
 
+find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
 find_path(TCLAP_INCLUDE_DIR tclap/CmdLine.h)
@@ -56,4 +57,15 @@ set_target_properties(Engine PROPERTIES
 
 
 # target_link_libraries(Engine Game d3d11 dxgi winmm d3dcompiler xinput)
-target_link_libraries(Engine tinyobjloader::tinyobjloader d3d11 dxgi winmm d3dcompiler xinput Ws2_32 dxguid)
+target_link_libraries(Engine
+    fmt::fmt
+    fmt::fmt-header-only
+    tinyobjloader::tinyobjloader
+    d3d11 
+    dxgi
+    winmm
+    d3dcompiler
+    xinput
+    Ws2_32
+    dxguid
+)

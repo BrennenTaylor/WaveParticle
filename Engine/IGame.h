@@ -18,13 +18,13 @@ public:
     virtual void Shutdown() = 0;
 
 protected:
-    ECSManager* m_pECSManager;
+    ECSManager* m_pECSManager = nullptr;
 };
 
 struct GameExport
 {
-    int version;
-    IGame* game;
+    int version = 0;
+    IGame* game = nullptr;
 };
 
 }

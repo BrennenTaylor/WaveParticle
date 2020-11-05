@@ -1,13 +1,13 @@
 #pragma once
 
-#include <Windows.h>
-
 #include "Window.h"
 
 #include "Engine.h"
 
 #include "..\Platform\Platform.h"
 
+#define WINDOWS_LEAN_AND_MEAN
+#include <Windows.h>
 #include <string>
 
 namespace Farlor

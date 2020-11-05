@@ -4,11 +4,11 @@
 #include <xmmintrin.h>
 #endif
 
-#include "../Farlor.h"
-
 #include "Vector2.h"
 #include "Vector3.h"
 #include "Vector4.h"
+
+#include <cassert>
 
 #define M_CHECK_ALIGNMENT(lObject, luAlignment) \
 { \

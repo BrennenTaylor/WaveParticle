@@ -39,17 +39,6 @@ set(ENGINE_VERSION ${ENGINE_MAJOR_VERSION}.${ENGINE_MINOR_VERSION}.${ENGINE_PATC
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-if(UNIX)
-    message(status "Setting GCC flags")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-else()
-    message(status "Setting MSVC flags")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3 /WX /nologo")
-    set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
-endif()
-
-message(status "** CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
-
 # Add subdirectories for project
 
 # Set the output folder

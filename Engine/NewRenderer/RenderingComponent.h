@@ -1,10 +1,9 @@
 #pragma once
 
-#include "string"
-
 #include "../ECS/Entity.h"
-
 #include "../Util/HashedString.h"
+
+#include <string>
 
 namespace Farlor
 {

@@ -1,20 +1,15 @@
-#include "Renderer.h"
+#include "NewRenderer/Renderer.h"
 
-#include <d3dcompiler.h>
-//
-//
 #include "WICTextureLoader.h"
-
-#include "Camera.h"
 
 #include "Mesh.h"
 
+#include "Camera.h"
 
 #include "../ECS/TransformComponent.h"
 #include "../ECS/TransformManager.h"
 
 #include "../Util/Logger.h"
-
 
 #include <iostream>
 
@@ -48,32 +43,33 @@ namespace Farlor
 
     void Renderer::Initialize(GameWindow gameWindow)
     {
-        HRESULT result;
+        HRESULT result = ERROR_SUCCESS;
 
         m_width = gameWindow.GetWidth();
         m_height = gameWindow.GetHeight();
 
-        DXGIModeDesc bufferDesc{m_width, m_height};
+        DXGIModeDesc bufferDesc{ m_width, m_height };
 
         // Describe swap chain
-        DXGISwapChainDesc swapChainDesc{bufferDesc, gameWindow};
+        DXGISwapChainDesc swapChainDesc{ bufferDesc, gameWindow };
 
         // Create the swap chain
         result = D3D11CreateDeviceAndSwapChain(
-            0, D3D_DRIVER_TYPE_HARDWARE, 0, 0, 0, 0, D3D11_SDK_VERSION,
+            nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, 0, 0, 0, D3D11_SDK_VERSION,
             &swapChainDesc.m_dxgiSwapChainDesc, &m_pSwapChain, &m_pDevice, 0, &m_pDeviceContext);
 
         // Create back buffer
-        ID3D11Texture2D* backBuffer;
-        result = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),
-            (void**)&backBuffer);
+        ID3D11Texture2D* pBackBuffer = nullptr;
+        result = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&pBackBuffer);
 
         // Create render target
-        result = m_pDevice->CreateRenderTargetView(backBuffer, 0, &m_pRenderTargetView);
-        backBuffer->Release();
+        assert(pBackBuffer != nullptr);
+        result = m_pDevice->CreateRenderTargetView(pBackBuffer, 0, &m_pRenderTargetView);
+        pBackBuffer->Release();
 
         // Describe depth stencil buffer
-        D3D11_TEXTURE2D_DESC depthStencilDesc = {0};
+        D3D11_TEXTURE2D_DESC depthStencilDesc;
+        ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
         depthStencilDesc.Width = m_width;
         depthStencilDesc.Height = m_height;
         depthStencilDesc.MipLevels = 1;
@@ -104,7 +100,7 @@ namespace Farlor
             FARLOR_LOG_ERROR("Failed to create depth stencil texture 2d")
         }
 
-        result = m_pDevice->CreateDepthStencilView(m_depthStencilBuffer, &dsvDesc, &m_depthStencilView);
+        result = m_pDevice->CreateDepthStencilView(m_depthStencilBuffer, &dsvDesc, &m_pDSV);
         if (FAILED(result))
         {
             FARLOR_LOG_ERROR("Failed to create depth stencil view")
@@ -117,27 +113,24 @@ namespace Farlor
         }
 
         // Set render target
-        m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_depthStencilView);
+        m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDSV);
 
 
         D3D11_DEPTH_STENCIL_DESC dsDesc;
-
+        ZeroMemory(&dsDesc, sizeof(dsDesc));
         // Depth test parameters
         dsDesc.DepthEnable = false;
         dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
         dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
-
         // Stencil test parameters
         dsDesc.StencilEnable = false;
         dsDesc.StencilReadMask = 0xFF;
         dsDesc.StencilWriteMask = 0xFF;
-
         // Stencil operations if pixel is front-facing
         dsDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
         dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
         dsDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
         dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-
         // Stencil operations if pixel is back-facing
         dsDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
         dsDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
@@ -145,18 +138,22 @@ namespace Farlor
         dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 
         // Create depth stencil state
-        m_pDevice->CreateDepthStencilState(&dsDesc, &m_pDSState);
+        result = m_pDevice->CreateDepthStencilState(&dsDesc, &m_pDSState);
+        if (FAILED(result))
+        {
+            FARLOR_LOG_ERROR("Failed to create depth stencil state")
+        }
 
         // Set raster desc
         RasterizerStateDesc rasterDesc;
+        ZeroMemory(&rasterDesc, sizeof(rasterDesc));
         rasterDesc.m_rasterDesc.CullMode = D3D11_CULL_BACK;
         rasterDesc.m_rasterDesc.FillMode = D3D11_FILL_SOLID;
         result = m_pDevice->CreateRasterizerState(&rasterDesc.m_rasterDesc, &m_rasterState);
         if (FAILED(result))
         {
-            std::cout << "Failed to create raster state" << std::endl;
+            std::cout << "Failed to create raster state: D3D11_CULL_BACK, D3D11_FILL_SOLID" << std::endl;
         }
-
         m_pDeviceContext->RSSetState(m_rasterState);
 
         rasterDesc.m_rasterDesc.CullMode = D3D11_CULL_NONE;
@@ -164,22 +161,22 @@ namespace Farlor
         result = m_pDevice->CreateRasterizerState(&rasterDesc.m_rasterDesc, &m_rasterStateNoCull);
         if (FAILED(result))
         {
-            std::cout << "Failed to create raster state" << std::endl;
+            std::cout << "Failed to create raster state: D3D11_CULL_BACK, D3D11_FILL_SOLID" << std::endl;
         }
 
         // Create and set viewport
-        D3D11_VIEWPORT viewport = {0};
+        // TODO: Drive this from the camera
+        D3D11_VIEWPORT viewport = { 0 };
         viewport.TopLeftX = 0.0f;
         viewport.TopLeftY = 0.0f;
         viewport.Width = (float)m_width;
         viewport.Height = (float)m_height;
         viewport.MinDepth = 0.0f;
         viewport.MaxDepth = 1.0f;
-
         m_pDeviceContext->RSSetViewports(1, &viewport);
 
         // Create constatnt buffer
-        D3D11_BUFFER_DESC cbd = {0};
+        D3D11_BUFFER_DESC cbd = { 0 };
         cbd.Usage = D3D11_USAGE_DEFAULT;
         cbd.ByteWidth = sizeof(Farlor::cbTransforms);
         cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -189,7 +186,7 @@ namespace Farlor
         result = m_pDevice->CreateBuffer(&cbd, 0, &m_cbTransformsBuffer);
         if (FAILED(result))
         {
-            std::cout << "Failed to create constant buffer layout" << std::endl;
+            std::cout << "Failed to create cbTransforms buffer" << std::endl;
         }
 
         // Create constatnt buffer
@@ -202,7 +199,7 @@ namespace Farlor
         result = m_pDevice->CreateBuffer(&cbd, 0, &m_cbMatPropertiesBuffer);
         if (FAILED(result))
         {
-            FARLOR_LOG_ERROR("Failed to create constant buffer layout")
+            FARLOR_LOG_ERROR("Failed to create cbMatProperties buffer")
         }
 
         // Create constatnt buffer
@@ -215,7 +212,7 @@ namespace Farlor
         result = m_pDevice->CreateBuffer(&cbd, 0, &m_cbLightPropertiesBuffer);
         if (FAILED(result))
         {
-            FARLOR_LOG_ERROR("Failed to create constant buffer layout")
+            FARLOR_LOG_ERROR("Failed to create cbLightProperties buffer")
         }
 
         // Create constatnt buffer
@@ -228,32 +225,34 @@ namespace Farlor
         result = m_pDevice->CreateBuffer(&cbd, 0, &m_cbCameraParamsBuffer);
         if (FAILED(result))
         {
-            FARLOR_LOG_ERROR("Failed to create constant buffer layout")
+            FARLOR_LOG_ERROR("Failed to create cbCameraParams buffer")
         }
 
         // Create sampler state
         D3D11_SAMPLER_DESC samplerDesc;
         ZeroMemory(&samplerDesc, sizeof(samplerDesc));
         samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    	samplerDesc.MipLODBias = 0.0f;
-    	samplerDesc.MaxAnisotropy = 1;
-    	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-    	samplerDesc.BorderColor[0] = 0;
-    	samplerDesc.BorderColor[1] = 0;
-    	samplerDesc.BorderColor[2] = 0;
-    	samplerDesc.BorderColor[3] = 0;
-    	samplerDesc.MinLOD = 0;
-    	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-        m_pDevice->CreateSamplerState(&samplerDesc, &m_pSamplerState);
+        samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+        samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+        samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+        samplerDesc.MipLODBias = 0.0f;
+        samplerDesc.MaxAnisotropy = 1;
+        samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+        samplerDesc.BorderColor[0] = 0;
+        samplerDesc.BorderColor[1] = 0;
+        samplerDesc.BorderColor[2] = 0;
+        samplerDesc.BorderColor[3] = 0;
+        samplerDesc.MinLOD = 0;
+        samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+        result = m_pDevice->CreateSamplerState(&samplerDesc, &m_pSamplerState);
+        if (FAILED(result))
+        {
+            FARLOR_LOG_ERROR("Failed to sampler state: D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_TEXTURE_ADDRESS_WRAP, D3D11_COMPARISON_ALWAYS")
+        }
 
         // Create blend states
         D3D11_BLEND_DESC blendDesc;
         ZeroMemory(&blendDesc, sizeof(blendDesc));
-
         blendDesc.RenderTarget[0].BlendEnable = true;
         blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
         blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
@@ -272,8 +271,8 @@ namespace Farlor
 
 
         // Wave Particle stuff
-
-        D3D11_TEXTURE2D_DESC waveParticleTextureDesc = {0};
+        // We create a window sized texture resource which can be bound as a render target and a shader resource
+        D3D11_TEXTURE2D_DESC waveParticleTextureDesc = { 0 };
         waveParticleTextureDesc.Width = m_width;
         waveParticleTextureDesc.Height = m_height;
         waveParticleTextureDesc.MipLevels = 1;
@@ -292,7 +291,8 @@ namespace Farlor
             std::cout << "Failed to create wave particle texture" << std::endl;
         }
 
-        D3D11_TEXTURE2D_DESC waveParticleStagingTextureDesc = {0};
+        // We create a window sized texture resource which can be bound as a staging texture. We use this to read back data wave particle data from the GPU
+        D3D11_TEXTURE2D_DESC waveParticleStagingTextureDesc = { 0 };
         waveParticleStagingTextureDesc.Width = m_width;
         waveParticleStagingTextureDesc.Height = m_height;
         waveParticleStagingTextureDesc.MipLevels = 1;
@@ -319,8 +319,13 @@ namespace Farlor
         renderTargetViewDesc.Format = waveParticleTextureDesc.Format;
         renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
         renderTargetViewDesc.Texture2D.MipSlice = 0;
+        result = m_pDevice->CreateRenderTargetView(m_pWaveParticleRenderTarget, &renderTargetViewDesc, &m_pWPRTView);
+        if (FAILED(result))
+        {
+            FARLOR_LOG_ERROR("Failed to create wave particle RT RTV")
+        }
 
-        m_pDevice->CreateRenderTargetView(m_pWaveParticleRenderTarget, &renderTargetViewDesc, &m_pWPRTView);
+
 
         D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
         ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
@@ -328,68 +333,73 @@ namespace Farlor
         shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
         shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
         shaderResourceViewDesc.Texture2D.MipLevels = 1;
+        result = m_pDevice->CreateShaderResourceView(m_pWaveParticleRenderTarget, &shaderResourceViewDesc, &m_pWPSRView);
+        if (FAILED(result))
+        {
+            FARLOR_LOG_ERROR("Failed to create wave particle RT SRV")
+        }
+
 
         // Create sampler state
         ZeroMemory(&samplerDesc, sizeof(samplerDesc));
         samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    	samplerDesc.MipLODBias = 0.0f;
-    	samplerDesc.MaxAnisotropy = 1;
-    	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-    	samplerDesc.BorderColor[0] = 0;
-    	samplerDesc.BorderColor[1] = 0;
-    	samplerDesc.BorderColor[2] = 0;
-    	samplerDesc.BorderColor[3] = 0;
-    	samplerDesc.MinLOD = 0;
-    	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+        samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+        samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+        samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+        samplerDesc.MipLODBias = 0.0f;
+        samplerDesc.MaxAnisotropy = 1;
+        samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+        samplerDesc.BorderColor[0] = 0;
+        samplerDesc.BorderColor[1] = 0;
+        samplerDesc.BorderColor[2] = 0;
+        samplerDesc.BorderColor[3] = 0;
+        samplerDesc.MinLOD = 0;
+        samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+        result = m_pDevice->CreateSamplerState(&samplerDesc, &m_pWPSampleState);
+        if (FAILED(result))
+        {
+            FARLOR_LOG_ERROR("Failed to create sampler state: D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_COMPARISON_ALWAYS")
+        }
 
-        m_pDevice->CreateSamplerState(&samplerDesc, &m_pWPSampleState);
-
-
-
-        m_pDevice->CreateShaderResourceView(m_pWaveParticleRenderTarget, &shaderResourceViewDesc, &m_pWPSRView);
-
-
-
+        // TODO: Get rid of this, not even used as I can tell
+        // Load up a particle texture, get a SRV for that texture
         result = CreateWICTextureFromFile(m_pDevice, m_pDeviceContext, L"resources/Sprites/Particle.png", nullptr, &m_pParticleTextureResourceView);
         if (FAILED(result))
         {
-            FARLOR_LOG_ERROR("Failed to load texture")
+            FARLOR_LOG_ERROR("Failed to load texture: resources/Sprites/Particle.png")
         }
 
         // Create an alpha enabled blend state description.
-        D3D11_BLEND_DESC blendStateDesc = {0};
-    	blendStateDesc.RenderTarget[0].BlendEnable = TRUE;
-    	blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-    	blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-    	blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-    	blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_INV_DEST_ALPHA;
-    	blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-    	blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-    	blendStateDesc.RenderTarget[0].RenderTargetWriteMask = 0x0f;
+        D3D11_BLEND_DESC blendStateDesc = { 0 };
+        blendStateDesc.RenderTarget[0].BlendEnable = TRUE;
+        blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+        blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+        blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+        blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_INV_DEST_ALPHA;
+        blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+        blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+        blendStateDesc.RenderTarget[0].RenderTargetWriteMask = 0x0f;
 
         result = m_pDevice->CreateBlendState(&blendStateDesc, &m_pEnableAlphaBlending);
-    	if(FAILED(result))
-    	{
-    		std::cout << "Failed to create alpha bend state active" << std::endl;
-    	}
+        if (FAILED(result))
+        {
+            FARLOR_LOG_ERROR("Failed to create alpha blend state: blend enabled")
+        }
 
         blendStateDesc.RenderTarget[0].BlendEnable = FALSE;
-    	blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-    	blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-    	blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-    	blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-    	blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-    	blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-    	blendStateDesc.RenderTarget[0].RenderTargetWriteMask = 0x0f;
+        blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+        blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+        blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+        blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+        blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+        blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+        blendStateDesc.RenderTarget[0].RenderTargetWriteMask = 0x0f;
 
         result = m_pDevice->CreateBlendState(&blendStateDesc, &m_pDisableAlphaBlending);
-    	if(FAILED(result))
-    	{
-    		std::cout << "Failed to create alpha bend state active" << std::endl;
-    	}
+        if (FAILED(result))
+        {
+            FARLOR_LOG_ERROR("Failed to create alpha blend state: blend disabled")
+        }
 
 
         // Depth test parameters
@@ -415,9 +425,13 @@ namespace Farlor
         dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 
         // Create depth stencil state
-        m_pDevice->CreateDepthStencilState(&dsDesc, &pDSState);
+        result = m_pDevice->CreateDepthStencilState(&dsDesc, &pDSState);
+        if (FAILED(result))
+        {
+            FARLOR_LOG_ERROR("Failed to create depth stencil state: wave particle")
+        }
 
-
+        // ensure that our particle system and terrain systems initialized
         g_WaveParticles.InitializeBuffers(m_pDevice, m_pDeviceContext);
         m_terrain.Initialize(100, 100, m_pDevice, m_pDeviceContext);
     }
@@ -426,13 +440,13 @@ namespace Farlor
     {
         m_camView = g_WaveParticleCamera.m_camView;
         // Perspective
-        m_camProjection = DirectX::XMMatrixPerspectiveFovLH(0.4f*3.14f, (float)m_width/m_height, 1.0f, 1000.0f);
+        m_camProjection = DirectX::XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)m_width / m_height, 1.0f, 1000.0f);
 
-        float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+        float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
         m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, clearColor);
-        m_pDeviceContext->ClearDepthStencilView(m_depthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
+        m_pDeviceContext->ClearDepthStencilView(m_pDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-        m_pDeviceContext->OMSetRenderTargets(1, &m_pWPRTView, m_depthStencilView);
+        m_pDeviceContext->OMSetRenderTargets(1, &m_pWPRTView, m_pDSV);
         m_pDeviceContext->ClearRenderTargetView(m_pWPRTView, clearColor);
 
         // Render the wave particles
@@ -460,7 +474,7 @@ namespace Farlor
         m_pDeviceContext->ClearRenderTargetView(m_renderTargets["G-Diffuse"].m_pRTView, clearColor);
         m_pDeviceContext->ClearRenderTargetView(m_renderTargets["G-Specular"].m_pRTView, clearColor);
         m_pDeviceContext->ClearRenderTargetView(m_renderTargets["G-Position"].m_pRTView, clearColor);
-        m_pDeviceContext->ClearDepthStencilView(m_depthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
+        m_pDeviceContext->ClearDepthStencilView(m_pDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
         m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
 
@@ -470,20 +484,20 @@ namespace Farlor
         m_pDeviceContext->PSSetShaderResources(0, 1, &m_pHouseTextureSRV);
         m_pDeviceContext->PSSetSamplers(0, 1, &m_pSamplerState);
 
-        ID3D11Buffer *pConstantBuffers[2];
+        ID3D11Buffer* pConstantBuffers[2];
         pConstantBuffers[0] = m_cbTransformsBuffer;
         pConstantBuffers[1] = m_cbMatPropertiesBuffer;
 
         m_pDeviceContext->VSSetConstantBuffers(0, 2, pConstantBuffers);
         m_pDeviceContext->PSSetConstantBuffers(0, 2, pConstantBuffers);
 
-        ID3D11RenderTargetView *deferredRTViews[4];
+        ID3D11RenderTargetView* deferredRTViews[4];
         deferredRTViews[0] = m_renderTargets["G-Normals"].m_pRTView;
         deferredRTViews[1] = m_renderTargets["G-Diffuse"].m_pRTView;
         deferredRTViews[2] = m_renderTargets["G-Specular"].m_pRTView;
         deferredRTViews[3] = m_renderTargets["G-Position"].m_pRTView;
 
-        m_pDeviceContext->OMSetRenderTargets(4, deferredRTViews, m_depthStencilView);
+        m_pDeviceContext->OMSetRenderTargets(4, deferredRTViews, m_pDSV);
 
         // Render all objects
         for (auto& renderComponent : m_renderingComponents)
@@ -493,7 +507,7 @@ namespace Farlor
 
         m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, nullptr);
 
-        ID3D11ShaderResourceView *resourceViews[4];
+        ID3D11ShaderResourceView* resourceViews[4];
 
         resourceViews[0] = m_renderTargets["G-Normals"].m_pRTShaderResourceView;
         resourceViews[1] = m_renderTargets["G-Diffuse"].m_pRTShaderResourceView;
@@ -504,7 +518,7 @@ namespace Farlor
 
         // Render ambient light
         m_shaders["GBufferLightAmbient"].SetPipeline(m_pDeviceContext);
-        m_pDeviceContext->PSSetShaderResources(0, 1, & m_renderTargets["G-Diffuse"].m_pRTShaderResourceView);
+        m_pDeviceContext->PSSetShaderResources(0, 1, &m_renderTargets["G-Diffuse"].m_pRTShaderResourceView);
 
         // Turn on alpha blending
         m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -524,8 +538,8 @@ namespace Farlor
 
 
         // Render the terrain
-        // m_pDeviceContext->ClearDepthStencilView(m_depthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
-        m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_depthStencilView);
+        // m_pDeviceContext->ClearDepthStencilView(m_pDSV, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
+        m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDSV);
         // m_pDeviceContext->RSSetState(m_rasterState);
 
         m_pDeviceContext->RSSetState(m_rasterStateNoCull);
@@ -549,7 +563,7 @@ namespace Farlor
         DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationRollPitchYaw(transformComponent.m_rotation.x, transformComponent.m_rotation.y, transformComponent.m_rotation.z);
 
         DirectX::XMMATRIX translate = DirectX::XMMatrixTranslation(transformComponent.m_position.x, transformComponent.m_position.y, transformComponent.m_position.z);
-        world = scale * rotate *  translate;
+        world = scale * rotate * translate;
 
         m_cbTransforms.World = DirectX::XMMatrixTranspose(world);
 
@@ -568,7 +582,7 @@ namespace Farlor
         m_cbMatProperties.SpecularPower = 1.0f;
         m_pDeviceContext->UpdateSubresource(m_cbMatPropertiesBuffer, 0, 0, &m_cbMatProperties, 0, 0);
 
-        ID3D11Buffer *pConstantBuffers[2];
+        ID3D11Buffer* pConstantBuffers[2];
         pConstantBuffers[0] = m_cbTransformsBuffer;
         pConstantBuffers[1] = m_cbMatPropertiesBuffer;
 
@@ -596,7 +610,7 @@ namespace Farlor
 
         m_pDeviceContext->UpdateSubresource(m_cbCameraParamsBuffer, 0, 0, &m_cbCameraParams, 0, 0);
 
-        ID3D11Buffer *pConstantBuffers[2];
+        ID3D11Buffer* pConstantBuffers[2];
         pConstantBuffers[0] = m_cbLightPropertiesBuffer;
         pConstantBuffers[1] = m_cbCameraParamsBuffer;
 
@@ -613,7 +627,7 @@ namespace Farlor
         std::string modelName = "resources/Models/";
         modelName += meshName.m_hashedString;
         FARLOR_LOG_INFO("Loading model: {}", modelName)
-        Mesh::LoadObjTinyObj(modelName, newMesh);
+            Mesh::LoadObjTinyObj(modelName, newMesh);
         newMesh.InitializeBuffers(m_pDevice, m_pDeviceContext);
         m_meshes[meshName] = newMesh;
     }
@@ -638,64 +652,64 @@ namespace Farlor
             switch (resourceDesc.m_type)
             {
             case RenderResourceType::RenderTarget:
-                {
-                    FARLOR_LOG_INFO("Creating render target")
+            {
+                FARLOR_LOG_INFO("Creating render target")
 
                     D3D11_TEXTURE2D_DESC rtDesc;
-                    ZeroMemory(&rtDesc, sizeof(rtDesc));
+                ZeroMemory(&rtDesc, sizeof(rtDesc));
 
-                    RenderTarget newRT;
+                RenderTarget newRT;
 
-                    rtDesc.Width = m_width * resourceDesc.m_widthScale;
-                    rtDesc.Height = m_height * resourceDesc.m_heightScale;
-                    rtDesc.MipLevels = 1;
-                    rtDesc.ArraySize = 1;
-                    rtDesc.Format = FormatToDXGIFormat(resourceDesc.m_format);
-                    rtDesc.SampleDesc.Count = 1;
-                    rtDesc.Usage = D3D11_USAGE_DEFAULT;
-                    rtDesc.BindFlags = D3D11_BIND_RENDER_TARGET|D3D11_BIND_SHADER_RESOURCE;
-                    rtDesc.CPUAccessFlags = 0;
-                    rtDesc.MiscFlags = 0;
+                rtDesc.Width = m_width * resourceDesc.m_widthScale;
+                rtDesc.Height = m_height * resourceDesc.m_heightScale;
+                rtDesc.MipLevels = 1;
+                rtDesc.ArraySize = 1;
+                rtDesc.Format = FormatToDXGIFormat(resourceDesc.m_format);
+                rtDesc.SampleDesc.Count = 1;
+                rtDesc.Usage = D3D11_USAGE_DEFAULT;
+                rtDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+                rtDesc.CPUAccessFlags = 0;
+                rtDesc.MiscFlags = 0;
 
-                    HRESULT result = m_pDevice->CreateTexture2D(&rtDesc, 0, &newRT.m_pRTTexture);
-                    if (FAILED(result))
-                    {
-                        FARLOR_LOG_ERROR("Failed to create global render target texture: {}", resourceDesc.m_name)
-                    }
+                HRESULT result = m_pDevice->CreateTexture2D(&rtDesc, 0, &newRT.m_pRTTexture);
+                if (FAILED(result))
+                {
+                    FARLOR_LOG_ERROR("Failed to create global render target texture: {}", resourceDesc.m_name)
+                }
 
-                    D3D11_RENDER_TARGET_VIEW_DESC rtViewDesc;
-                    ZeroMemory(&rtViewDesc, sizeof(rtViewDesc));
-                    rtViewDesc.Format = rtDesc.Format;
-                    rtViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-                    rtViewDesc.Texture2D.MipSlice = 0;
-                    result = m_pDevice->CreateRenderTargetView(newRT.m_pRTTexture, &rtViewDesc, &newRT.m_pRTView);
-                    if (FAILED(result))
-                    {
-                        FARLOR_LOG_ERROR("Failed to create global render target view: {}", resourceDesc.m_name)
-                    }
+                D3D11_RENDER_TARGET_VIEW_DESC rtViewDesc;
+                ZeroMemory(&rtViewDesc, sizeof(rtViewDesc));
+                rtViewDesc.Format = rtDesc.Format;
+                rtViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+                rtViewDesc.Texture2D.MipSlice = 0;
+                result = m_pDevice->CreateRenderTargetView(newRT.m_pRTTexture, &rtViewDesc, &newRT.m_pRTView);
+                if (FAILED(result))
+                {
+                    FARLOR_LOG_ERROR("Failed to create global render target view: {}", resourceDesc.m_name)
+                }
 
-                    D3D11_SHADER_RESOURCE_VIEW_DESC rtSRViewDesc;
-                    ZeroMemory(&rtSRViewDesc, sizeof(rtSRViewDesc));
-                    rtSRViewDesc.Format = rtDesc.Format;
-                    rtSRViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-                    rtSRViewDesc.Texture2D.MostDetailedMip = 0;
-                    rtSRViewDesc.Texture2D.MipLevels = 1;
-                    result = m_pDevice->CreateShaderResourceView(newRT.m_pRTTexture, &rtSRViewDesc, &newRT.m_pRTShaderResourceView);
-                    if (FAILED(result))
-                    {
-                        FARLOR_LOG_ERROR("Failed to create global render target shader resource view: {}", resourceDesc.m_name)
-                    }
+                D3D11_SHADER_RESOURCE_VIEW_DESC rtSRViewDesc;
+                ZeroMemory(&rtSRViewDesc, sizeof(rtSRViewDesc));
+                rtSRViewDesc.Format = rtDesc.Format;
+                rtSRViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+                rtSRViewDesc.Texture2D.MostDetailedMip = 0;
+                rtSRViewDesc.Texture2D.MipLevels = 1;
+                result = m_pDevice->CreateShaderResourceView(newRT.m_pRTTexture, &rtSRViewDesc, &newRT.m_pRTShaderResourceView);
+                if (FAILED(result))
+                {
+                    FARLOR_LOG_ERROR("Failed to create global render target shader resource view: {}", resourceDesc.m_name)
+                }
 
-                    FARLOR_LOG_INFO("Successfuly created global render target: {}", resourceDesc.m_name);
+                FARLOR_LOG_INFO("Successfuly created global render target: {}", resourceDesc.m_name);
 
-                    m_renderTargets.insert(std::pair<std::string, RenderTarget>(resourceDesc.m_name, newRT));
+                m_renderTargets.insert(std::pair<std::string, RenderTarget>(resourceDesc.m_name, newRT));
 
-                } break;
+            } break;
 
             default:
-                {
-                    FARLOR_LOG_WARNING("Incorrect resource type, cannot create")
-                } break;
+            {
+                FARLOR_LOG_WARNING("Incorrect resource type, cannot create")
+            } break;
             }
         }
     }
@@ -706,7 +720,7 @@ namespace Farlor
         m_shaders[name] = newShader;
     }
 
-void Renderer::CreateShaders()
+    void Renderer::CreateShaders()
     {
         for (auto& shaderPair : m_shaders)
         {

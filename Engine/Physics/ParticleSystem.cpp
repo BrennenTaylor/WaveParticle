@@ -1,6 +1,7 @@
-#include  "ParticleSystem.h"
+// NOTE: For some fucking reason this must be included before any d3d11 stuff gets included. Why you ask? No clue.
+#include <d3dcompiler.h>
 
-#include <DirectXMath.h>
+#include  "ParticleSystem.h"
 
 #include "../NewRenderer/Renderer.h"
 
@@ -15,7 +16,9 @@
 
 #include "DiffractionCollisionPacket.h"
 
-using namespace DirectX;
+#include <DirectXMath.h>
+
+#include "../Util/Logger.h"
 
 namespace Farlor
 {
@@ -26,28 +29,57 @@ namespace Farlor
     static float speed = 20.0f;
     static float g_amplitudeDropRate = 0.001f;
 
+    const float PI = 3.141592f;
+    const float TWO_PI = 2.0f * PI;
+
+    ParticleSystem::WaveParticle::WaveParticle(const Vector3& birthPos, const Vector3& direction, float birthTime, float size, bool isActive)
+        : m_birthPosition(birthPos)
+        , m_currentPosition(m_birthPosition)
+        , m_direction(direction)
+        , m_amplitude{ 1.0f }
+        , m_dispersionAngle{ TWO_PI / 8.0f }
+        , m_birthTime(birthTime)
+        , m_particleSize(size)
+        , m_active(isActive)
+        , m_timeMoved{ 0.0f }
+    {
+    }
+
+    bool ParticleSystem::WaveParticle::ShouldKill()
+    {
+        const float amplitudeCutoffThreshold = 0.1f;
+        return (m_amplitude <= amplitudeCutoffThreshold);
+    }
+
     ParticleSystem::ParticleSystem(int numParticles)
+        : m_waveParticles()
+        , m_collisionPlanes()
+        , m_collisionSegments()
+        , m_maxParticles(numParticles)
+        , m_numActualParticles(0)
+        , m_particleSize(0.0)
+        , m_vertexCount(0)
+        , m_indexCount(0)
+        , m_cbPerObject{}
     {
         m_vertices = nullptr;
         m_indices = nullptr;
         m_maxParticles = numParticles;
 
-        // m_timer.Initialize();
-
         srand((unsigned int)time(0));
 
-        // auto genIntInRange = [](int min, int max)
-        // {
-        //     return rand() % max + min;
-        // };
-
+        // Initialize all the possible particles
         for (int i = 0; i < numParticles; i++)
-        // for (int i = 0; i < numParticles; i++)
         {
-            m_waveParticles.push_back(WaveParticle(
-                Vector3(0.0f, 0.0f, 0.0f),
-                Vector3(0.0f, 0.0f, 0.5f), 0.0f));
-            m_waveParticles[i].m_active = false;
+            m_waveParticles.push_back(
+                WaveParticle(
+                    Vector3(0.0f, 0.0f, 0.0f), // Birth Pos
+                    Vector3(1.0f, 0.0f, 0.0f), // Dir of Travel
+                    0.0f, // Birth time
+                    20.0f, // Particle Size
+                    false // isActive
+                )
+            );
         }
 
         // for (int i = 0; i < 1000; i++)
@@ -920,24 +952,25 @@ namespace Farlor
         // std::cout << "Killed off: " << (numBefore - m_numActualParticles) << std::endl;
     }
 
+    // Take in renderer device and context and aquire and own buffers for particles
+    // TODO: Seperate this so the particle system doesnt actually own the buffers.
     void ParticleSystem::InitializeBuffers(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext)
     {
-        HRESULT result;
+        HRESULT result = ERROR_SUCCESS;
+
+        // TODO: Why do we need 6 times the number of vertices
         // Number of vertices is 6 as each particle becomes a quad of 2 triangles
         m_vertexCount = m_maxParticles * 6;
         m_indexCount = m_vertexCount;
-
         m_vertices = new WaveParticleVertex[m_vertexCount];
         assert(m_vertices);
+        memset(m_vertices, 0, sizeof(WaveParticleVertex) * m_vertexCount);
 
         m_indices = new unsigned int[m_indexCount];
-        assert(m_vertices);
-
-        memset(m_vertices, 0, sizeof(WaveParticleVertex)*m_vertexCount);
-
-        for(int i = 0; i < m_indexCount; i++)
+        assert(m_indices);
+        for(int idx = 0; idx < m_indexCount; idx++)
         {
-            m_indices[i] = i;
+            m_indices[idx] = idx;
         }
 
         D3D11_BUFFER_DESC vertexBufferDesc{0};
@@ -951,10 +984,10 @@ namespace Farlor
         vertexData.SysMemPitch = 0;
         vertexData.SysMemSlicePitch = 0;
 
-        result = pDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer);
+        result = pDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &m_pVertexBuffer);
         if (FAILED(result))
         {
-            std::cout << "Failed to create vertex buffer" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create vertex buffer: particle system")
             return;
         }
 
@@ -968,75 +1001,73 @@ namespace Farlor
         indexData.SysMemPitch = 0;
         indexData.SysMemSlicePitch = 0;
 
-        result = pDevice->CreateBuffer(&indexBufferDesc, &indexData, &m_indexBuffer);
+        result = pDevice->CreateBuffer(&indexBufferDesc, &indexData, &m_pIndexBuffer);
         if (FAILED(result))
         {
-            std::cout << "Failed to create index buffer" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create index buffer: particle system")
             return;
         }
 
         delete[] m_indices;
         m_indices = nullptr;
 
-        // Lets load ball shaders
-        ID3DBlob* errorMessage = nullptr;
-        ID3DBlob* vertexShaderBuffer = nullptr;
-        ID3DBlob* pixelShaderBuffer = nullptr;
+        // Lets load shaders
+        ID3DBlob* pErrorMessage = nullptr;
+        ID3DBlob* pVertexShaderBuffer = nullptr;
+        ID3DBlob* pPixelShaderBuffer = nullptr;
         D3D11_BUFFER_DESC matrixBufferDesc = {0};
 
         std::wstring vertexShaderName = L"resources/shaders/PositionUV.hlsl";
         std::wstring pixelShaderName = L"resources/shaders/PositionUV.hlsl";
 
-        result = D3DCompileFromFile(vertexShaderName.c_str(), 0, 0, "VSMain", "vs_5_0", 0, 0, &vertexShaderBuffer, &errorMessage);
+        result = D3DCompileFromFile(vertexShaderName.c_str(), 0, 0, "VSMain", "vs_5_0", 0, 0, &pVertexShaderBuffer, &pErrorMessage);
         if (FAILED(result))
         {
-            std::cout << "Failed to compile vertex shader" << std::endl;
+            FARLOR_LOG_ERROR("Failed to compile vertex shader: resources/shaders/PositionUV.hlsl")
             return;
         }
 
-        result = D3DCompileFromFile(pixelShaderName.c_str(), 0, 0, "PSMain", "ps_5_0", 0, 0, &pixelShaderBuffer, &errorMessage);
+        result = D3DCompileFromFile(pixelShaderName.c_str(), 0, 0, "PSMain", "ps_5_0", 0, 0, &pPixelShaderBuffer, &pErrorMessage);
         if (FAILED(result))
         {
-            std::cout << "Failed to compile ball pixel shader" << std::endl;
+            FARLOR_LOG_ERROR("Failed to compile pixel shader: resources/shaders/PositionUV.hlsl")
             return;
         }
 
-        result = pDevice->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), 0, &m_pVertexShader);
+        result = pDevice->CreateVertexShader(pVertexShaderBuffer->GetBufferPointer(), pVertexShaderBuffer->GetBufferSize(), 0, &m_pVertexShader);
         if (FAILED(result))
         {
-            std::cout << "Failed to createe ball vertex shader" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create vertex shader: resources/shaders/PositionUV.hlsl")
             return;
         }
 
-        result = pDevice->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), 0, &m_pPixelShader);
+        result = pDevice->CreatePixelShader(pPixelShaderBuffer->GetBufferPointer(), pPixelShaderBuffer->GetBufferSize(), 0, &m_pPixelShader);
         if (FAILED(result))
         {
-            std::cout << "Failed to create ball pixel shader" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create pixel shader: resources/shaders/PositionUV.hlsl")
             return;
         }
 
         // Create input layout
         result = pDevice->CreateInputLayout(WaveParticleVertex::s_layout, WaveParticleVertex::s_numElements,
-            vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(),
+            pVertexShaderBuffer->GetBufferPointer(), pVertexShaderBuffer->GetBufferSize(),
             &m_inputLayout);
-
         if (FAILED(result))
         {
-            std::cout << "Failed to create input layout" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create input layout: WaveParticleVertex::s_layout")
         }
 
-        // Create constatnt buffer
+        // Create constant buffer
         D3D11_BUFFER_DESC cbd = {0};
         cbd.Usage = D3D11_USAGE_DEFAULT;
         cbd.ByteWidth = sizeof(ParticleSystem::cbPerObject);
         cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
         cbd.CPUAccessFlags = 0;
         cbd.MiscFlags = 0;
-
         result = pDevice->CreateBuffer(&cbd, 0, &m_cbPerObjectBuffer);
         if (FAILED(result))
         {
-            std::cout << "Failed to create constant buffer layout" << std::endl;
+            FARLOR_LOG_ERROR("Failed to create ParticleSystem::cbPerObject")
         }
 
         // Set raster desc
@@ -1052,7 +1083,6 @@ namespace Farlor
     	rasterDesc.MultisampleEnable = false;
     	rasterDesc.ScissorEnable = false;
     	rasterDesc.SlopeScaledDepthBias = 0.0f;
-
         result = pDevice->CreateRasterizerState(&rasterDesc, &m_rasterState);
         if (FAILED(result))
         {
@@ -1062,15 +1092,16 @@ namespace Farlor
 
     void ParticleSystem::UpdateBuffers(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext)
     {
-        HRESULT result;
+        HRESULT result = ERROR_SUCCESS;
         D3D11_MAPPED_SUBRESOURCE mappedVertices = {0};
-        WaveParticleVertex* verticesPtr;
+        WaveParticleVertex* pGpuVertices = nullptr;
 
         // Reset array of vertices
         memset(m_vertices, 0, sizeof(WaveParticleVertex) * m_vertexCount);
 
         // Now build vertex array from particle list array
         // Each particle becomes a quad made out of two triangles
+        // TODO: This likely can become gpu side function mapping or something, no vertices but the particle center needed or something
         int index = 0;
         for (int i = 0; i < m_numActualParticles; i++)
         {
@@ -1084,7 +1115,6 @@ namespace Farlor
             particleDir = particleDir.Normalized();
             float angle = atan2(xDir.Dot(particleDir), yDir.Dot(particleDir));
             
-
             // Bottom Left
             m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x - particleSize;
             m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y - waveFrontSize;
@@ -1147,20 +1177,20 @@ namespace Farlor
             index++;
         }
 
-        // Lock vertex buffer
-        result = pDeviceContext->Map(m_vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedVertices);
+        // Lock vertex buffer and copy data to it
+        result = pDeviceContext->Map(m_pVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedVertices);
         if (FAILED(result))
         {
-            std::cout << "Failed to map resource" << std::endl;
+            std::cout << "Failed to map resource: m_vertexBuffer" << std::endl;
             return;
         }
 
         // Get pointer to data in vertex buffer
-        verticesPtr = (WaveParticleVertex*)mappedVertices.pData;
+        pGpuVertices = (WaveParticleVertex*)mappedVertices.pData;
 
-        memcpy(verticesPtr, (void*)m_vertices, sizeof(WaveParticleVertex)*m_vertexCount);
+        memcpy(pGpuVertices, (void*)m_vertices, sizeof(WaveParticleVertex)*m_vertexCount);
         // Unlock buffer
-        pDeviceContext->Unmap(m_vertexBuffer, 0);
+        pDeviceContext->Unmap(m_pVertexBuffer, 0);
     }
 
     void ParticleSystem::Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext, ID3D11ShaderResourceView* pParticleTextureSRView, ID3D11SamplerState* pWPSampleState)
@@ -1174,23 +1204,23 @@ namespace Farlor
         pDeviceContext->PSSetShader(m_pPixelShader, 0, 0);
         pDeviceContext->IASetInputLayout(m_inputLayout);
 
-        XMMATRIX world = XMMatrixIdentity();
+        DirectX::XMMATRIX world = DirectX::XMMatrixIdentity();
 
-        XMMATRIX wvp = world * g_RenderingSystem.m_camView * g_RenderingSystem.m_camProjection;
+        DirectX::XMMATRIX wvp = world * g_RenderingSystem.m_camView * g_RenderingSystem.m_camProjection;
+        m_cbPerObject.WVP = DirectX::XMMatrixTranspose(wvp);
 
-        m_cbPerObject.WVP = XMMatrixTranspose(wvp);
         pDeviceContext->UpdateSubresource(m_cbPerObjectBuffer, 0, 0, &m_cbPerObject, 0, 0);
         pDeviceContext->VSSetConstantBuffers(0, 1, &m_cbPerObjectBuffer);
 
         pDeviceContext->RSSetState(m_rasterState);
 
-        pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
-        pDeviceContext->IASetIndexBuffer(m_indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+        pDeviceContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
+        pDeviceContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
         pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
         pDeviceContext->PSSetShaderResources(0, 1, &pParticleTextureSRView);
         pDeviceContext->PSSetSamplers(0, 1, &pWPSampleState);
 
-        pDeviceContext->DrawIndexed(m_numActualParticles*6, 0, 0);
+        pDeviceContext->DrawIndexed(m_numActualParticles * 6, 0, 0);
     }
 }

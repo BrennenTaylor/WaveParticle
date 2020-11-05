@@ -10,7 +10,7 @@ namespace Farlor
         },
     };
 
-    u32 VertexPosition::s_numElements = 1;
+    uint32_t VertexPosition::s_numElements = 1;
 
     VertexPosition::VertexPosition()
         : m_position{0.0f, 0.0f, 0.0f}
@@ -37,7 +37,7 @@ namespace Farlor
         },
     };
 
-    u32 VertexPositionUVNormal::s_numElements = 3;
+    uint32_t VertexPositionUVNormal::s_numElements = 3;
 
     VertexPositionUVNormal::VertexPositionUVNormal()
         : m_position{0.0f, 0.0f, 0.0f}
@@ -77,7 +77,7 @@ namespace Farlor
         },
     };
 
-    u32 WaveParticleVertex::s_numElements = 5;
+    uint32_t WaveParticleVertex::s_numElements = 5;
 
     WaveParticleVertex::WaveParticleVertex()
         : m_position{0.0f, 0.0f, 0.0f}
@@ -108,7 +108,7 @@ namespace Farlor
         },
     };
 
-    u32 VertexPositionUV::s_numElements = 2;
+    uint32_t VertexPositionUV::s_numElements = 2;
 
     VertexPositionUV::VertexPositionUV()
         : m_position{0.0f, 0.0f, 0.0f}
@@ -137,7 +137,7 @@ namespace Farlor
         },
     };
     
-    u32 VertexPositionColorUV::s_numElements = 3;
+    uint32_t VertexPositionColorUV::s_numElements = 3;
 
     VertexPositionColorUV::VertexPositionColorUV()
         : m_position{0.0f, 0.0f, 0.0f}

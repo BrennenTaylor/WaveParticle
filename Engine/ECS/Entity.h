@@ -1,8 +1,8 @@
 #pragma once
 
-#include "..\Farlor.h"
+#include <cstdint>
 
 namespace Farlor
 {
-    typedef u32 Entity;
+    typedef uint32_t Entity;
 }

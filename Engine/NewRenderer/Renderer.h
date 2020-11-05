@@ -3,42 +3,32 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#include <d3d11shader.h>
-#include <d3d12shader.h>
-
 #include <d3d11.h>
+
+#include "RenderingComponent.h"
+#include "LightComponents.h"
+
+#include "RenderResourceDesc.h"
+#include "RenderTarget.h"
+
+#include "../Physics/Particlesystem.h"
 
 #include "D3D11/DXGIModeDesc.h"
 #include "D3D11/DXGISwapChainDesc.h"
 #include "D3D11/RasterizerStateDesc.h"
 
 #include "../Core/Window.h"
-
 #include "../ECS/Entity.h"
-
-#include "RenderingComponent.h"
-
-#include <DirectXMath.h>
-
-#include "RenderResourceDesc.h"
-
-#include "RenderTarget.h"
-
 #include "Mesh.h"
-
 #include "CBs.h"
-
 #include "Shader.h"
-
 #include "ViewMode.h"
 
-#include "LightComponents.h"
 
-
-// Wave Particle Stuff
-#include "../Physics/ParticleSystem.h"
-
+//// Wave Particle Stuff
 #include "Terrain.h"
+//
+#include <DirectXMath.h>
 
 namespace Farlor
 {
@@ -91,7 +81,7 @@ class Renderer
         ID3D11Device* m_pDevice;
         ID3D11DeviceContext* m_pDeviceContext;
         ID3D11RenderTargetView* m_pRenderTargetView;
-        ID3D11DepthStencilView* m_depthStencilView;
+        ID3D11DepthStencilView* m_pDSV;
         ID3D11Texture2D* m_depthStencilBuffer;
         ID3D11ShaderResourceView* m_pDepthScencilSRV;
 

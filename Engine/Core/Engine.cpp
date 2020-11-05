@@ -47,19 +47,22 @@ namespace Farlor
     typedef GameExport* (*GetGameAPIPtr)(LinearAllocator& allocator, EngineExport& engineExport);
 
     // Global Declarations of engine systems
-    EventManager g_EventManager{};
-    PhysicsSystem g_PhysicsSystem{};
-    Renderer g_RenderingSystem{};
+    EventManager g_EventManager;
+    PhysicsSystem g_PhysicsSystem;
+    Renderer g_RenderingSystem;
     Camera g_MainCamera{true};
-    Farlor::Timer g_TimerGame{};
-    NetworkManager g_NetworkManager{};
+    Farlor::Timer g_TimerGame;
+    NetworkManager g_NetworkManager;
     InputHandler g_InputHandler;
-    TransformManager g_TransformManager{};
-    GameWindow m_gameWindow;
+    TransformManager g_TransformManager;
+    GameWindow g_GameWindow;
 
+    // Sim specific stuff
+    const uint32_t numWaveParticles = 5000;
+    ParticleSystem g_WaveParticles{ numWaveParticles };
 
-    ParticleSystem g_WaveParticles{5000};
-    Camera g_WaveParticleCamera{false};
+    const bool waveParticleCameraIsMovable = false;
+    Camera g_WaveParticleCamera{waveParticleCameraIsMovable};
 
     const float SCREEN_DEPTH = 1000.0f;
     const float SCREEN_NEAR = 0.001f;
@@ -87,23 +90,22 @@ namespace Farlor
     int Engine::Run()
     {
         // Create and show the game window
-        // GameWindow m_gameWindow;
-        m_gameWindow.Initialize(m_fullscreen);
-        m_gameWindow.ShowGameWindow();
+        g_GameWindow.Initialize(m_fullscreen);
+        g_GameWindow.ShowGameWindow();
 
-        g_RenderingSystem.Initialize(m_gameWindow);
+        g_RenderingSystem.Initialize(g_GameWindow);
 
         RAWINPUTDEVICE rawInputDevices[2];
         // Keyboard
         rawInputDevices[0].usUsagePage = 0x01;
         rawInputDevices[0].usUsage = 0x06; // Keyboard
         rawInputDevices[0].dwFlags = RIDEV_NOLEGACY; // Dont generate legacy messages
-        rawInputDevices[0].hwndTarget = m_gameWindow.GetWindowHandle();
+        rawInputDevices[0].hwndTarget = g_GameWindow.GetWindowHandle();
         // Mouse
         rawInputDevices[1].usUsagePage = 0x01;
         rawInputDevices[1].usUsage = 0x02; // Mouse
         rawInputDevices[1].dwFlags = RIDEV_NOLEGACY; // Dont generate legacy messages
-        rawInputDevices[1].hwndTarget = m_gameWindow.GetWindowHandle();
+        rawInputDevices[1].hwndTarget = g_GameWindow.GetWindowHandle();
 
         // Register devices
         // if(RegisterRawInputDevices(rawInputDevices, 2, sizeof(RAWINPUTDEVICE)) == false)
@@ -325,7 +327,7 @@ namespace Farlor
         g_TimerGame.Reset();
 
         // This is the game loop
-        while (m_gameWindow.IsRunning())
+        while (g_GameWindow.IsRunning())
         {
             // QueryPerformanceCounter(&counter);
             // double newTime = (double)counter.QuadPart / (double)frequency.QuadPart;
@@ -345,7 +347,7 @@ namespace Farlor
             {
                 std::stringstream titleTextStream;
                 titleTextStream << "Farlor Engine: " << (int)(1.0f / (runningTotal / numFrameCount));
-                m_gameWindow.SetWindowTitleText(titleTextStream.str());
+                g_GameWindow.SetWindowTitleText(titleTextStream.str());
                 currentFrame = 0;
                 runningTotal = 0.0;
             }
@@ -354,7 +356,7 @@ namespace Farlor
             controllerConnectionUpdate.AccumulateTime(frameTime);
 
             // Process messages
-            m_gameWindow.ProcessSystemMessages();
+            g_GameWindow.ProcessSystemMessages();
             // Get polled input
             controllerManager.PollStates();
             // Process networking
@@ -393,7 +395,7 @@ namespace Farlor
         FARLOR_LOG_INFO("Shutting down the engine system")
 
         // // Shutdown subsystems here
-        m_gameWindow.Shutdown();
+        g_GameWindow.Shutdown();
 
         return 0;
     }

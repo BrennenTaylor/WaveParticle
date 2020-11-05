@@ -1,15 +1,15 @@
 #pragma once
 
+#include "Win32Window.h"
 
 #include "../Physics/ParticleSystem.h"
-
-#include "Win32Window.h"
-#include <windowsx.h>
 
 #include "../Core/Events/EventManager.h"
 #include "../Core/Events/KeyboardEvent.h"
 
 #include "../NewRenderer/Camera.h"
+
+#include <windowsx.h>
 
 namespace Farlor
 {
@@ -69,8 +69,8 @@ namespace Farlor
         }
         else
         {
-            m_width = 800;
-            m_height = 600;
+            m_width = static_cast<unsigned int>(800 * 1.5);
+            m_height = static_cast<unsigned int>(600 * 1.5);
 
             posX = (GetSystemMetrics(SM_CXSCREEN) - m_width)  / 2;
             posY = (GetSystemMetrics(SM_CYSCREEN) - m_height) / 2;

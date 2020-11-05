@@ -1,11 +1,11 @@
+// NOTE: For some fucking reason this must be included before any d3d11 stuff gets included. Why you ask? No clue.
+#include <d3dcompiler.h>
 #include "Terrain.h"
 
+#include "Renderer.h"
 #include "Vertex.h"
 
-#include "Renderer.h"
-
 #include <DirectXMath.h>
-using namespace DirectX;
 
 namespace Farlor
 {
@@ -14,6 +14,15 @@ namespace Farlor
     Terrain::Terrain()
         : m_width{0}
         , m_height{0}
+        , m_vertexCount{0}
+        , m_indexCount{0}
+        , m_pVertexBuffer{nullptr}
+        , m_pIndexBuffer{nullptr}
+        , m_pPositionColorVertexShader{nullptr}
+        , m_pPositionColorPixelShader{nullptr}
+        , m_pPositionColorInputLayout{nullptr}
+        , m_cbPerObjectBuffer{nullptr}
+        , m_cbPerObject{}
     {
     }
 
@@ -97,10 +106,10 @@ namespace Farlor
         pDeviceContext->PSSetShader(m_pPositionColorPixelShader, 0, 0);
         pDeviceContext->IASetInputLayout(m_pPositionColorInputLayout);
 
-        XMMATRIX world = XMMatrixIdentity();
-        XMMATRIX wvp = world * g_RenderingSystem.m_camView * g_RenderingSystem.m_camProjection;
+        DirectX::XMMATRIX world = DirectX::XMMatrixIdentity();
+        DirectX::XMMATRIX wvp = world * g_RenderingSystem.m_camView * g_RenderingSystem.m_camProjection;
 
-        m_cbPerObject.WVP = XMMatrixTranspose(wvp);
+        m_cbPerObject.WVP = DirectX::XMMatrixTranspose(wvp);
         pDeviceContext->UpdateSubresource(m_cbPerObjectBuffer, 0, 0, &m_cbPerObject, 0, 0);
         pDeviceContext->VSSetConstantBuffers(0, 1, &m_cbPerObjectBuffer);
 

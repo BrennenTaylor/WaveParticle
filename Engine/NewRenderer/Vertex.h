@@ -1,14 +1,18 @@
 #pragma once
 
+#include "Math/Vector2.h"
+#include "Math/Vector3.h"
+#include "Math/Vector4.h"
+
+#include <cstdint>
 #include <d3d11.h>
-#include "../Math/Math.h"
 
 namespace Farlor
 {
     struct VertexPosition
     {
         static D3D11_INPUT_ELEMENT_DESC s_layout[];
-        static u32 s_numElements;
+        static uint32_t s_numElements;
 
         Vector3 m_position;
 
@@ -19,7 +23,7 @@ namespace Farlor
     struct VertexPositionUV
     {
         static D3D11_INPUT_ELEMENT_DESC s_layout[];
-        static u32 s_numElements;
+        static uint32_t s_numElements;
 
         Vector3 m_position;
         Vector2 m_uv;
@@ -31,7 +35,7 @@ namespace Farlor
     struct WaveParticleVertex
     {
         static D3D11_INPUT_ELEMENT_DESC s_layout[];
-        static u32 s_numElements;
+        static uint32_t s_numElements;
 
         Vector3 m_position;
         Vector2 m_uv;
@@ -46,7 +50,7 @@ namespace Farlor
     struct VertexPositionUVNormal
     {
         static D3D11_INPUT_ELEMENT_DESC s_layout[];
-        static u32 s_numElements;
+        static uint32_t s_numElements;
 
         Vector3 m_position;
         Vector2 m_uv;
@@ -61,7 +65,7 @@ namespace Farlor
     struct VertexPositionColorUV
     {
         static D3D11_INPUT_ELEMENT_DESC s_layout[];
-        static u32 s_numElements;
+        static uint32_t s_numElements;
 
         Vector3 m_position;
         Vector4 m_color;

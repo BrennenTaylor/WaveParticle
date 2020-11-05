@@ -1,11 +1,14 @@
 #include "Mesh.h"
 
-#include <fstream>
+#include "Vertex.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
-#include "Vertex.h"
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <fstream>
+#include <unordered_map>
 
 namespace Farlor
 {
@@ -73,7 +76,7 @@ namespace Farlor
         pDeviceContext->DrawIndexed((unsigned int)m_indices.size(), 0, 0);
     }
 
-    bool Mesh::CreateCylinder(float bottomRadius, float topRadius, float height, u32 sliceCount, u32 stackCount, Mesh& mesh)
+    bool Mesh::CreateCylinder(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount, Mesh& mesh)
     {
         mesh.m_vertices.clear();
         mesh.m_indices.clear();
@@ -81,17 +84,17 @@ namespace Farlor
         float stackHeight = height / stackCount;
         float radiusStep = (topRadius - bottomRadius) / stackCount;
 
-        u32 ringCount = stackCount + 1;
+        uint32_t ringCount = stackCount + 1;
 
         // Compute vertices
-        for (u32 i = 0; i < ringCount; ++i)
+        for (uint32_t i = 0; i < ringCount; ++i)
         {
             float y = -0.5f * height + i * stackHeight;
             float r = bottomRadius + i * radiusStep;
 
             // Vertics of ring
-            float dTheta = 2.0f * FARLOR_PI / sliceCount;
-            for (u32 j = 0; j < sliceCount; ++j)
+            float dTheta = 2.0f * static_cast<float>(M_PI) / sliceCount;
+            for (uint32_t j = 0; j < sliceCount; ++j)
             {
                 VertexPositionUVNormal vertex;
                 float c = cosf(j * dTheta);
@@ -110,11 +113,11 @@ namespace Farlor
             }
         }
 
-        u32 ringVertexCount = sliceCount + 1;
+        uint32_t ringVertexCount = sliceCount + 1;
 
-        for (u32 i = 0; i < stackCount; ++i)
+        for (uint32_t i = 0; i < stackCount; ++i)
         {
-            for (u32 j = 0; j < stackCount; ++j)
+            for (uint32_t j = 0; j < stackCount; ++j)
             {
                 mesh.m_indices.push_back(i*ringVertexCount + j);
                 mesh.m_indices.push_back((i+1)*ringVertexCount + j);
@@ -177,11 +180,11 @@ namespace Farlor
         // Generate normals if the values are not loaded.
         // TODO: Check that the values are not loaded.
 
-        for (u32 i = 0; i < (u32)mesh.m_indices.size(); i += 3)
+        for (uint32_t i = 0; i < (uint32_t)mesh.m_indices.size(); i += 3)
         {
-            u32 index0 = mesh.m_indices[i];
-            u32 index1 = mesh.m_indices[i+1];
-            u32 index2 = mesh.m_indices[i+2];
+            uint32_t index0 = mesh.m_indices[i];
+            uint32_t index1 = mesh.m_indices[i+1];
+            uint32_t index2 = mesh.m_indices[i+2];
 
             Vector3 pos0 = mesh.m_vertices[index0].m_position;
             Vector3 pos1 = mesh.m_vertices[index1].m_position;
@@ -196,7 +199,7 @@ namespace Farlor
             mesh.m_vertices[index2].m_normal += faceNormal;
         }
 
-        for (u32 i = 0; i < (u32)mesh.m_vertices.size(); ++i)
+        for (uint32_t i = 0; i < (uint32_t)mesh.m_vertices.size(); ++i)
         {
             mesh.m_vertices[i].m_normal = mesh.m_vertices[i].m_normal.Normalized();
         }
