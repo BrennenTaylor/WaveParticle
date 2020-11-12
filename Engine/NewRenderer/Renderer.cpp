@@ -296,25 +296,51 @@ namespace Farlor
         }
 
         // Create sampler state
-        D3D11_SAMPLER_DESC samplerDesc;
-        ZeroMemory(&samplerDesc, sizeof(samplerDesc));
-        samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-        samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-        samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-        samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-        samplerDesc.MipLODBias = 0.0f;
-        samplerDesc.MaxAnisotropy = 1;
-        samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-        samplerDesc.BorderColor[0] = 0;
-        samplerDesc.BorderColor[1] = 0;
-        samplerDesc.BorderColor[2] = 0;
-        samplerDesc.BorderColor[3] = 0;
-        samplerDesc.MinLOD = 0;
-        samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-        result = m_pDevice->CreateSamplerState(&samplerDesc, &m_pSamplerState);
-        if (FAILED(result))
         {
-            FARLOR_LOG_ERROR("Failed to sampler state: D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_TEXTURE_ADDRESS_WRAP, D3D11_COMPARISON_ALWAYS")
+            D3D11_SAMPLER_DESC samplerDesc;
+            ZeroMemory(&samplerDesc, sizeof(samplerDesc));
+            samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+            samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+            samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+            samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+            samplerDesc.MipLODBias = 0.0f;
+            samplerDesc.MaxAnisotropy = 1;
+            samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+            samplerDesc.BorderColor[0] = 0;
+            samplerDesc.BorderColor[1] = 0;
+            samplerDesc.BorderColor[2] = 0;
+            samplerDesc.BorderColor[3] = 0;
+            samplerDesc.MinLOD = 0;
+            samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+            result = m_pDevice->CreateSamplerState(&samplerDesc, &m_pWrapSamplerState);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to sampler state: D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_TEXTURE_ADDRESS_WRAP, D3D11_COMPARISON_ALWAYS")
+            }
+        }
+
+        // Create clamp sampler state
+        {
+            D3D11_SAMPLER_DESC samplerDesc;
+            ZeroMemory(&samplerDesc, sizeof(samplerDesc));
+            samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+            samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+            samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+            samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+            samplerDesc.MipLODBias = 0.0f;
+            samplerDesc.MaxAnisotropy = 1;
+            samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+            samplerDesc.BorderColor[0] = 0;
+            samplerDesc.BorderColor[1] = 0;
+            samplerDesc.BorderColor[2] = 0;
+            samplerDesc.BorderColor[3] = 0;
+            samplerDesc.MinLOD = 0;
+            samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+            result = m_pDevice->CreateSamplerState(&samplerDesc, &m_pClampSamplerState);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create sampler state: D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_COMPARISON_ALWAYS")
+            }
         }
 
         // Create blend states
@@ -365,103 +391,239 @@ namespace Farlor
         // This can be any size, but it just cant be bigger than the window as a dsv is shared.
         // TODO: Have our own dsv
 
-
-
-        D3D11_TEXTURE2D_DESC waveParticleTextureDesc = { 0 };
-        waveParticleTextureDesc.Width = WaveParticleHeightmapRenderTargetSize;
-        waveParticleTextureDesc.Height = WaveParticleHeightmapRenderTargetSize;
-        waveParticleTextureDesc.MipLevels = 1;
-        waveParticleTextureDesc.ArraySize = 1;
-        waveParticleTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-        waveParticleTextureDesc.SampleDesc.Count = 1;
-        waveParticleTextureDesc.SampleDesc.Quality = 0;
-        waveParticleTextureDesc.Usage = D3D11_USAGE_DEFAULT;
-        waveParticleTextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-        waveParticleTextureDesc.CPUAccessFlags = 0;
-        waveParticleTextureDesc.MiscFlags = 0;
-
-        result = m_pDevice->CreateTexture2D(&waveParticleTextureDesc, 0, &m_pWaveParticleRenderTarget);
-        if (FAILED(result))
+        // Wave particle main render target
         {
-            std::cout << "Failed to create wave particle texture" << std::endl;
+            D3D11_TEXTURE2D_DESC waveParticleTextureDesc = { 0 };
+            waveParticleTextureDesc.Width = WaveParticleHeightmapRenderTargetSize;
+            waveParticleTextureDesc.Height = WaveParticleHeightmapRenderTargetSize;
+            waveParticleTextureDesc.MipLevels = 1;
+            waveParticleTextureDesc.ArraySize = 1;
+            waveParticleTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            waveParticleTextureDesc.SampleDesc.Count = 1;
+            waveParticleTextureDesc.SampleDesc.Quality = 0;
+            waveParticleTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+            waveParticleTextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+            waveParticleTextureDesc.CPUAccessFlags = 0;
+            waveParticleTextureDesc.MiscFlags = 0;
+
+            result = m_pDevice->CreateTexture2D(&waveParticleTextureDesc, 0, &m_pWaveParticleRenderTarget);
+            if (FAILED(result))
+            {
+                std::cout << "Failed to create wave particle texture" << std::endl;
+            }
+
+            D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+            ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
+            renderTargetViewDesc.Format = waveParticleTextureDesc.Format;
+            renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            renderTargetViewDesc.Texture2D.MipSlice = 0;
+            result = m_pDevice->CreateRenderTargetView(m_pWaveParticleRenderTarget, &renderTargetViewDesc, &m_pWPRTView);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create wave particle RT RTV")
+            }
+
+
+
+            D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+            ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
+            shaderResourceViewDesc.Format = waveParticleTextureDesc.Format;
+            shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+            shaderResourceViewDesc.Texture2D.MipLevels = 1;
+            result = m_pDevice->CreateShaderResourceView(m_pWaveParticleRenderTarget, &shaderResourceViewDesc, &m_pWPSRView);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create wave particle RT SRV")
+            }
         }
 
-        // We create a window sized texture resource which can be bound as a staging texture. We use this to read back data wave particle data from the GPU
-        D3D11_TEXTURE2D_DESC waveParticleStagingTextureDesc = { 0 };
-        waveParticleStagingTextureDesc.Width = m_width;
-        waveParticleStagingTextureDesc.Height = m_height;
-        waveParticleStagingTextureDesc.MipLevels = 1;
-        waveParticleStagingTextureDesc.ArraySize = 1;
-        waveParticleStagingTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-        waveParticleStagingTextureDesc.SampleDesc.Count = 1;
-        waveParticleStagingTextureDesc.SampleDesc.Quality = 0;
-        waveParticleStagingTextureDesc.Usage = D3D11_USAGE_STAGING;
-        waveParticleStagingTextureDesc.BindFlags = 0;
-        waveParticleStagingTextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
-        waveParticleStagingTextureDesc.MiscFlags = 0;
-
-        result = m_pDevice->CreateTexture2D(&waveParticleStagingTextureDesc, 0, &m_pWaveParticleStagingResource);
-        if (FAILED(result))
+        // Wave particle first horizontal blur texture
         {
-            std::cout << "Failed to create wave particle staging texture" << std::endl;
+            D3D11_TEXTURE2D_DESC waveParticleBlurH1TextureDesc = { 0 };
+            waveParticleBlurH1TextureDesc.Width = WaveParticleHeightmapRenderTargetSize;
+            waveParticleBlurH1TextureDesc.Height = WaveParticleHeightmapRenderTargetSize;
+            waveParticleBlurH1TextureDesc.MipLevels = 1;
+            waveParticleBlurH1TextureDesc.ArraySize = 1;
+            waveParticleBlurH1TextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            waveParticleBlurH1TextureDesc.SampleDesc.Count = 1;
+            waveParticleBlurH1TextureDesc.SampleDesc.Quality = 0;
+            waveParticleBlurH1TextureDesc.Usage = D3D11_USAGE_DEFAULT;
+            waveParticleBlurH1TextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+            waveParticleBlurH1TextureDesc.CPUAccessFlags = 0;
+            waveParticleBlurH1TextureDesc.MiscFlags = 0;
+
+            result = m_pDevice->CreateTexture2D(&waveParticleBlurH1TextureDesc, 0, &m_pWPHB1B);
+            if (FAILED(result))
+            {
+                std::cout << "Failed to create wave particle texture: waveParticleBlurH1Texture" << std::endl;
+            }
+
+            D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+            ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
+            renderTargetViewDesc.Format = waveParticleBlurH1TextureDesc.Format;
+            renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            renderTargetViewDesc.Texture2D.MipSlice = 0;
+            result = m_pDevice->CreateRenderTargetView(m_pWPHB1B, &renderTargetViewDesc, &m_pWPHB1RTV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create wave particle H1 RTV")
+            }
+
+
+
+            D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+            ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
+            shaderResourceViewDesc.Format = waveParticleBlurH1TextureDesc.Format;
+            shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+            shaderResourceViewDesc.Texture2D.MipLevels = 1;
+            result = m_pDevice->CreateShaderResourceView(m_pWPHB1B, &shaderResourceViewDesc, &m_pWPHB1SRV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create wave particle H1 SRV")
+            }
         }
 
-        // Create vertex staging data
-        m_pHeightmapPositions = new Vector4[WaveParticleHeightmapRenderTargetSize];
-
-        D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
-        ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
-        renderTargetViewDesc.Format = waveParticleTextureDesc.Format;
-        renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-        renderTargetViewDesc.Texture2D.MipSlice = 0;
-        result = m_pDevice->CreateRenderTargetView(m_pWaveParticleRenderTarget, &renderTargetViewDesc, &m_pWPRTView);
-        if (FAILED(result))
+        // Wave particle second horizontal blur texture
         {
-            FARLOR_LOG_ERROR("Failed to create wave particle RT RTV")
+            D3D11_TEXTURE2D_DESC waveParticleBlurH2TextureDesc = { 0 };
+            waveParticleBlurH2TextureDesc.Width = WaveParticleHeightmapRenderTargetSize;
+            waveParticleBlurH2TextureDesc.Height = WaveParticleHeightmapRenderTargetSize;
+            waveParticleBlurH2TextureDesc.MipLevels = 1;
+            waveParticleBlurH2TextureDesc.ArraySize = 1;
+            waveParticleBlurH2TextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            waveParticleBlurH2TextureDesc.SampleDesc.Count = 1;
+            waveParticleBlurH2TextureDesc.SampleDesc.Quality = 0;
+            waveParticleBlurH2TextureDesc.Usage = D3D11_USAGE_DEFAULT;
+            waveParticleBlurH2TextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+            waveParticleBlurH2TextureDesc.CPUAccessFlags = 0;
+            waveParticleBlurH2TextureDesc.MiscFlags = 0;
+
+            result = m_pDevice->CreateTexture2D(&waveParticleBlurH2TextureDesc, 0, &m_pWPHB2B);
+            if (FAILED(result))
+            {
+                std::cout << "Failed to create wave particle texture: waveParticleBlurH2Texture" << std::endl;
+            }
+
+            D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+            ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
+            renderTargetViewDesc.Format = waveParticleBlurH2TextureDesc.Format;
+            renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            renderTargetViewDesc.Texture2D.MipSlice = 0;
+            result = m_pDevice->CreateRenderTargetView(m_pWPHB2B, &renderTargetViewDesc, &m_pWPHB2RTV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create wave particle H2 RTV")
+            }
+
+
+
+            D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+            ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
+            shaderResourceViewDesc.Format = waveParticleBlurH2TextureDesc.Format;
+            shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+            shaderResourceViewDesc.Texture2D.MipLevels = 1;
+            result = m_pDevice->CreateShaderResourceView(m_pWPHB2B, &shaderResourceViewDesc, &m_pWPHB2SRV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create wave particle H2 SRV")
+            }
         }
 
-
-
-        D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-        ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
-        shaderResourceViewDesc.Format = waveParticleTextureDesc.Format;
-        shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-        shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
-        shaderResourceViewDesc.Texture2D.MipLevels = 1;
-        result = m_pDevice->CreateShaderResourceView(m_pWaveParticleRenderTarget, &shaderResourceViewDesc, &m_pWPSRView);
-        if (FAILED(result))
+        // Wave particle first vertical blur texture
         {
-            FARLOR_LOG_ERROR("Failed to create wave particle RT SRV")
+            D3D11_TEXTURE2D_DESC waveParticleBlurV1TextureDesc = { 0 };
+            waveParticleBlurV1TextureDesc.Width = WaveParticleHeightmapRenderTargetSize;
+            waveParticleBlurV1TextureDesc.Height = WaveParticleHeightmapRenderTargetSize;
+            waveParticleBlurV1TextureDesc.MipLevels = 1;
+            waveParticleBlurV1TextureDesc.ArraySize = 1;
+            waveParticleBlurV1TextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            waveParticleBlurV1TextureDesc.SampleDesc.Count = 1;
+            waveParticleBlurV1TextureDesc.SampleDesc.Quality = 0;
+            waveParticleBlurV1TextureDesc.Usage = D3D11_USAGE_DEFAULT;
+            waveParticleBlurV1TextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+            waveParticleBlurV1TextureDesc.CPUAccessFlags = 0;
+            waveParticleBlurV1TextureDesc.MiscFlags = 0;
+
+            result = m_pDevice->CreateTexture2D(&waveParticleBlurV1TextureDesc, 0, &m_pWPVB1B);
+            if (FAILED(result))
+            {
+                std::cout << "Failed to create wave particle texture: waveParticleBlurV1Texture" << std::endl;
+            }
+
+            D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+            ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
+            renderTargetViewDesc.Format = waveParticleBlurV1TextureDesc.Format;
+            renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            renderTargetViewDesc.Texture2D.MipSlice = 0;
+            result = m_pDevice->CreateRenderTargetView(m_pWPVB1B, &renderTargetViewDesc, &m_pWPVB1RTV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create wave particle V1 RTV")
+            }
+
+
+
+            D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+            ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
+            shaderResourceViewDesc.Format = waveParticleBlurV1TextureDesc.Format;
+            shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+            shaderResourceViewDesc.Texture2D.MipLevels = 1;
+            result = m_pDevice->CreateShaderResourceView(m_pWPVB1B, &shaderResourceViewDesc, &m_pWPVB1SRV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create wave particle V1 SRV")
+            }
         }
 
-
-        // Create sampler state
-        ZeroMemory(&samplerDesc, sizeof(samplerDesc));
-        samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-        samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-        samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-        samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-        samplerDesc.MipLODBias = 0.0f;
-        samplerDesc.MaxAnisotropy = 1;
-        samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-        samplerDesc.BorderColor[0] = 0;
-        samplerDesc.BorderColor[1] = 0;
-        samplerDesc.BorderColor[2] = 0;
-        samplerDesc.BorderColor[3] = 0;
-        samplerDesc.MinLOD = 0;
-        samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-        result = m_pDevice->CreateSamplerState(&samplerDesc, &m_pWPSampleState);
-        if (FAILED(result))
+        // Wave particle second vertical blur texture
         {
-            FARLOR_LOG_ERROR("Failed to create sampler state: D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_COMPARISON_ALWAYS")
-        }
+            D3D11_TEXTURE2D_DESC waveParticleBlurV2TextureDesc = { 0 };
+            waveParticleBlurV2TextureDesc.Width = WaveParticleHeightmapRenderTargetSize;
+            waveParticleBlurV2TextureDesc.Height = WaveParticleHeightmapRenderTargetSize;
+            waveParticleBlurV2TextureDesc.MipLevels = 1;
+            waveParticleBlurV2TextureDesc.ArraySize = 1;
+            waveParticleBlurV2TextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            waveParticleBlurV2TextureDesc.SampleDesc.Count = 1;
+            waveParticleBlurV2TextureDesc.SampleDesc.Quality = 0;
+            waveParticleBlurV2TextureDesc.Usage = D3D11_USAGE_DEFAULT;
+            waveParticleBlurV2TextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+            waveParticleBlurV2TextureDesc.CPUAccessFlags = 0;
+            waveParticleBlurV2TextureDesc.MiscFlags = 0;
 
-        // TODO: Get rid of this, not even used as I can tell
-        // Load up a particle texture, get a SRV for that texture
-        result = CreateWICTextureFromFile(m_pDevice, m_pDeviceContext, L"resources/Sprites/Particle.png", nullptr, &m_pParticleTextureResourceView);
-        if (FAILED(result))
-        {
-            FARLOR_LOG_ERROR("Failed to load texture: resources/Sprites/Particle.png")
+            result = m_pDevice->CreateTexture2D(&waveParticleBlurV2TextureDesc, 0, &m_pWPVB2B);
+            if (FAILED(result))
+            {
+                std::cout << "Failed to create wave particle texture: waveParticleBlurV2Texture" << std::endl;
+            }
+
+            D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+            ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
+            renderTargetViewDesc.Format = waveParticleBlurV2TextureDesc.Format;
+            renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            renderTargetViewDesc.Texture2D.MipSlice = 0;
+            result = m_pDevice->CreateRenderTargetView(m_pWPVB2B, &renderTargetViewDesc, &m_pWPVB2RTV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create wave particle V2 RTV")
+            }
+
+
+
+            D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+            ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
+            shaderResourceViewDesc.Format = waveParticleBlurV2TextureDesc.Format;
+            shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+            shaderResourceViewDesc.Texture2D.MipLevels = 1;
+            result = m_pDevice->CreateShaderResourceView(m_pWPVB2B, &shaderResourceViewDesc, &m_pWPVB2SRV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create wave particle V2 SRV")
+            }
         }
 
 
@@ -527,19 +689,54 @@ namespace Farlor
         m_pDeviceContext->OMSetDepthStencilState(pDSState, 0);
 
         m_pDeviceContext->OMSetBlendState(m_pAdditiveBlendState, 0, 0xffffffff);
-        g_WaveParticles.Render(m_pDevice, m_pDeviceContext, m_pParticleTextureResourceView, m_pWPSampleState);
+        g_WaveParticles.Render(m_pDevice, m_pDeviceContext);
         m_pDeviceContext->OMSetBlendState(m_pNoBlendState, 0, 0xffffffff);
 
-        // Read back the heightmap texture
-        // m_pDeviceContext->CopyResource(m_pWaveParticleStagingResource, m_pWaveParticleRenderTarget);
-        // D3D11_MAPPED_SUBRESOURCE mappedSubResource;
-        //
-        // m_pDeviceContext->Map(m_pWaveParticleStagingResource, 0, D3D11_MAP_READ, 0, &mappedSubResource);
-        // memcpy(m_pHeightmapPositions, mappedSubResource.pData, sizeof(Vector4)*m_height*m_width);
-        // m_pDeviceContext->Unmap(m_pWaveParticleStagingResource, 0);
-        //
-        //
-        // m_waterSurface.UpdateMesh(m_pHeightmapPositions);
+        // Render horizontal blur
+        {
+            m_pDeviceContext->ClearRenderTargetView(m_pWPHB1RTV, clearColor);
+            m_pDeviceContext->ClearRenderTargetView(m_pWPHB2RTV, clearColor);
+            m_pDeviceContext->ClearDepthStencilView(m_pWaveParticleDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+
+
+            ID3D11RenderTargetView* pRenderTargets[2];
+            pRenderTargets[0] = m_pWPHB1RTV;
+            pRenderTargets[1] = m_pWPHB2RTV;
+            m_pDeviceContext->OMSetRenderTargets(2, pRenderTargets, m_pWaveParticleDSV);
+
+            m_pDeviceContext->PSSetShaderResources(0, 1, &m_pWPSRView);
+            m_pDeviceContext->PSSetSamplers(0, 1, &m_pWrapSamplerState);
+
+            m_shaders["WaveParticleHB"].SetPipeline(m_pDeviceContext);
+
+            m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            m_pDeviceContext->Draw(3, 0);
+        }
+
+        // Render vertical blur
+        {
+            m_pDeviceContext->ClearRenderTargetView(m_pWPVB1RTV, clearColor);
+            m_pDeviceContext->ClearRenderTargetView(m_pWPVB2RTV, clearColor);
+            m_pDeviceContext->ClearDepthStencilView(m_pWaveParticleDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+            ID3D11RenderTargetView* pRenderTargets[2];
+            pRenderTargets[0] = m_pWPVB1RTV;
+            pRenderTargets[1] = m_pWPVB2RTV;
+            m_pDeviceContext->OMSetRenderTargets(2, pRenderTargets, m_pWaveParticleDSV);
+
+
+            ID3D11ShaderResourceView* pSRVs[2];
+            pSRVs[0] = m_pWPHB1SRV;
+            pSRVs[1] = m_pWPHB2SRV;
+            m_pDeviceContext->PSSetShaderResources(0, 2, pSRVs);
+            m_pDeviceContext->PSSetSamplers(0, 1, &m_pWrapSamplerState);
+
+            m_shaders["WaveParticleVB"].SetPipeline(m_pDeviceContext);
+
+            m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            m_pDeviceContext->Draw(3, 0);
+        }
 
 
         // Set back to main viewport
@@ -563,7 +760,7 @@ namespace Farlor
         m_shaders["GBufferBasePass"].SetPipeline(m_pDeviceContext);
 
         m_pDeviceContext->PSSetShaderResources(0, 1, &m_pHouseTextureSRV);
-        m_pDeviceContext->PSSetSamplers(0, 1, &m_pSamplerState);
+        m_pDeviceContext->PSSetSamplers(0, 1, &m_pWrapSamplerState);
 
         ID3D11Buffer* pConstantBuffers[2];
         pConstantBuffers[0] = m_cbTransformsBuffer;
@@ -623,14 +820,14 @@ namespace Farlor
 
         m_pDeviceContext->RSSetState(m_pNoCullRS);
 
-
         // Note: Render lights handled this, so we probably dont need this, but we will do it again to be sure
         DirectX::XMFLOAT3 pos;
         DirectX::XMStoreFloat3(&pos, g_MainCamera.m_camPosition);
         m_cbCameraParams.m_eyePosition = Vector3(pos.x, pos.y, pos.z);
         m_pDeviceContext->UpdateSubresource(m_cbCameraParamsBuffer, 0, 0, &m_cbCameraParams, 0, 0);
 
-        m_waterSurface.Render(m_pDevice, m_pDeviceContext, m_pWPSRView, m_pWPSampleState, m_cbCameraParamsBuffer);
+        m_waterSurface.Render(m_pDevice, m_pDeviceContext, m_pWPVB1SRV, m_pWPVB2SRV, m_pClampSamplerState, m_cbCameraParamsBuffer);
+
 
         m_pSwapChain->Present(0, 0);
     }

@@ -46,11 +46,11 @@ int main(int argc, char** argv)
     // TODO: Should this be global static instance?
     Farlor::Engine gameEngine = Farlor::Engine::Instatnce();
 
-    if (!std::filesystem::exists("E:/Log/"))
+    if (!std::filesystem::exists("C:/Logs/"))
     {
-        std::filesystem::create_directories("E:/Log/");
+        std::filesystem::create_directories("C:/Logs/");
     }
-    FARLOR_LOG_STARTUP_SIMPLE_FILE("E:/Log/WaveParticle.txt")
+    FARLOR_LOG_STARTUP_SIMPLE_FILE("C:/Logs/WaveParticle.txt")
 
     FARLOR_LOG_INFO("Info")
     FARLOR_LOG_WARNING("Warning")

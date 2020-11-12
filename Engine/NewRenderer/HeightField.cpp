@@ -109,7 +109,7 @@ namespace Farlor
         InitializeBuffers(pDevice, pDeviceContext);
     }
 
-    void HeightField::Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext, ID3D11ShaderResourceView* pWSRView, ID3D11SamplerState* pWPSampleState,
+    void HeightField::Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext, ID3D11ShaderResourceView* pWPVB1SRV, ID3D11ShaderResourceView* pWPVB2SRV, ID3D11SamplerState* pWPSampleState,
         ID3D11Buffer* pCameraCBBuffer)
     {
         unsigned int stride = sizeof(VertexPositionColorUV);
@@ -132,7 +132,10 @@ namespace Farlor
         pDeviceContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
         pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        pDeviceContext->VSSetShaderResources(0, 1, &pWSRView);
+        ID3D11ShaderResourceView* pSRVs[2];
+        pSRVs[0] = pWPVB1SRV;
+        pSRVs[1] = pWPVB2SRV;
+        pDeviceContext->VSSetShaderResources(0, 2, pSRVs);
         pDeviceContext->VSSetSamplers(0, 1, &pWPSampleState);
 
         // We need to set a PS contant buffer for camera data

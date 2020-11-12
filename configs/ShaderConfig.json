@@ -72,6 +72,18 @@
             "name" : "GBufferLightAmbient",
             "hasVS" : true,
             "hasPS" : true
+        },
+        {
+            "filename": "WaveParticleHB.hlsl",
+            "name": "WaveParticleHB",
+            "hasVS": true,
+            "hasPS": true
+        },
+        {
+            "filename": "WaveParticleVB.hlsl",
+            "name": "WaveParticleVB",
+            "hasVS": true,
+            "hasPS": true
         }
     ]
 }

@@ -113,7 +113,8 @@ class Renderer
         std::map<std::string, RenderTarget> m_renderTargets;
 
         ID3D11ShaderResourceView* m_pHouseTextureSRV;
-        ID3D11SamplerState* m_pSamplerState;
+        ID3D11SamplerState* m_pWrapSamplerState = nullptr;
+        ID3D11SamplerState* m_pClampSamplerState = nullptr;
 
         ID3D11DepthStencilState* m_pDSState;
 
@@ -132,19 +133,28 @@ class Renderer
         ID3D11RenderTargetView* m_pWPRTView;
         ID3D11ShaderResourceView* m_pWPSRView;
 
-        ID3D11Texture2D* m_pWaveParticleStagingResource;
+        ID3D11Texture2D* m_pWPHB1B = nullptr;
+        ID3D11RenderTargetView* m_pWPHB1RTV = nullptr;
+        ID3D11ShaderResourceView* m_pWPHB1SRV = nullptr;
 
-        ID3D11ShaderResourceView* m_pParticleTextureResourceView;
+        ID3D11Texture2D* m_pWPHB2B = nullptr;
+        ID3D11RenderTargetView* m_pWPHB2RTV = nullptr;
+        ID3D11ShaderResourceView* m_pWPHB2SRV = nullptr;
+
+        ID3D11Texture2D* m_pWPVB1B = nullptr;
+        ID3D11RenderTargetView* m_pWPVB1RTV = nullptr;
+        ID3D11ShaderResourceView* m_pWPVB1SRV = nullptr;
+
+        ID3D11Texture2D* m_pWPVB2B = nullptr;
+        ID3D11RenderTargetView* m_pWPVB2RTV = nullptr;
+        ID3D11ShaderResourceView* m_pWPVB2SRV = nullptr;
+
 
         std::vector<ParticleSystem> m_particleSystems;
-
-        ID3D11SamplerState* m_pWPSampleState;
 
         ID3D11DepthStencilState * pDSState;
 
         HeightField m_waterSurface;
-
-        Vector4* m_pHeightmapPositions;
 
 
         static std::map<std::string, RenderResourceType> s_stringToTypeMapping;

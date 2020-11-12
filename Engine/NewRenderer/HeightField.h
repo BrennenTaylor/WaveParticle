@@ -21,7 +21,7 @@ namespace Farlor
 
         void Initialize(int width, int height, const Farlor::Vector3& corner, uint32_t numGridCells, ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext);
 
-        void Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext, ID3D11ShaderResourceView* pWSRView, ID3D11SamplerState* pWPSampleState, ID3D11Buffer* pCameraCBBuffer);
+        void Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext, ID3D11ShaderResourceView* pWPVB1SRV, ID3D11ShaderResourceView* pWPVB2SRV, ID3D11SamplerState* pWPSampleState, ID3D11Buffer* pCameraCBBuffer);
 
     public:
         int m_width;

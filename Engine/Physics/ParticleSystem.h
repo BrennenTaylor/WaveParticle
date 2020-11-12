@@ -51,7 +51,7 @@ namespace Farlor
 
         void InitializeBuffers(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext);
         void UpdateBuffers(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext);
-        void Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext, ID3D11ShaderResourceView* pWSRView, ID3D11SamplerState* pWPSampleState);
+        void Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext);
 
         void StartRandomWave();
 

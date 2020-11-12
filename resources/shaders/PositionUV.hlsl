@@ -12,9 +12,6 @@ struct PS_INPUT
     float amplitude : AMPLITUDE;
 };
 
-Texture2D MainTexture;
-SamplerState MainTextureSamplerState;
-
 PS_INPUT VSMain(VS_INPUT input)
 {
 	PS_INPUT output;
