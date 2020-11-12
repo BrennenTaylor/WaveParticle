@@ -11,6 +11,8 @@
 
 #include <vector>
 
+#include <random>
+
 namespace Farlor
 {
     class ParticleSystem
@@ -27,13 +29,15 @@ namespace Farlor
             float m_amplitude; // How much energy is in the particle? Usually the center of the particle is full amplitude
             float m_dispersionAngle; // What angle of space is the particle covering, i.e. angle of circle based ripple covered by this particle
 
+            float m_speed;
+
             float m_birthTime; // Time particle was created at
             float m_particleSize; // How big is the thing?
             bool m_active; // Is the particle active?
 
             float m_timeMoved; // How long has the thing moved
 
-            WaveParticle(const Vector3& birthPos, const Vector3& direction, float birthTime, float size = 20.0f, bool isActive = false);
+            WaveParticle(const Vector3& birthPos, const Vector3& direction, float birthTime, float size, float speed, bool isActive = false);
 
             bool ShouldKill();
         };
@@ -80,5 +84,7 @@ namespace Farlor
         ID3D11InputLayout* m_inputLayout = nullptr;
 
         ID3D11RasterizerState* m_rasterState = nullptr;
+
+        std::mt19937 m_gen;
     };
 }

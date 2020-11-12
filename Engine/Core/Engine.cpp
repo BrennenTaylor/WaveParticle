@@ -58,7 +58,7 @@ namespace Farlor
     GameWindow g_GameWindow;
 
     // Sim specific stuff
-    const uint32_t numWaveParticles = 5000;
+    const uint32_t numWaveParticles = 10000;
     ParticleSystem g_WaveParticles{ numWaveParticles };
 
     const bool waveParticleCameraIsMovable = false;

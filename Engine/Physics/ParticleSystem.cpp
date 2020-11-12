@@ -20,24 +20,25 @@
 
 #include "../Util/Logger.h"
 
+#include <time.h>
+
 namespace Farlor
 {
     extern Renderer g_RenderingSystem;
     extern Farlor::Timer g_TimerGame;
 
-    static float zCoord = 0.0f;
-    static float speed = 0.1f;
     static float g_amplitudeDropRate = 0.001f;
 
     const float PI = 3.141592f;
     const float TWO_PI = 2.0f * PI;
 
-    ParticleSystem::WaveParticle::WaveParticle(const Vector3& birthPos, const Vector3& direction, float birthTime, float size, bool isActive)
+    ParticleSystem::WaveParticle::WaveParticle(const Vector3& birthPos, const Vector3& direction, float birthTime, float size, float speed, bool isActive)
         : m_birthPosition(birthPos)
         , m_currentPosition(m_birthPosition)
         , m_direction(direction)
         , m_amplitude{ 1.0f }
         , m_dispersionAngle{ 0.0f }
+        , m_speed{ speed }
         , m_birthTime(birthTime)
         , m_particleSize(size)
         , m_active(isActive)
@@ -61,11 +62,11 @@ namespace Farlor
         , m_vertexCount(0)
         , m_indexCount(0)
     {
+        m_gen = std::mt19937(time(0));
+
         m_vertices = nullptr;
         m_indices = nullptr;
         m_maxParticles = numParticles;
-
-        srand((unsigned int)time(0));
 
         // Initialize all the possible particles
         for (int i = 0; i < numParticles; i++)
@@ -100,75 +101,33 @@ namespace Farlor
     void ParticleSystem::StartRandomWave()
     {
 
-        const int numPoints = 1;
-        const float initialParticleRadius = 1;
+        //const int numPoints = 1;
+        //const float initialParticleRadius = 1;
 
-        Vector3 direction(1.0f, 0.0f, 0.0f);
-        direction *= speed;
-        WaveParticle newParticle(Vector3(0.0, 0.0, 0.0), direction, (float)g_TimerGame.TotalTime(), initialParticleRadius);
-        // We need to figure out how to measure "angle" for  parallel waves. Important for diffraction.
-        newParticle.m_amplitude = 0.15;
-        newParticle.m_particleSize = 1.0;
-        AddParticle(newParticle);
+        //Vector3 direction(0.0f, 1.0f, 0.0f);
+        //direction *= 1.0;
+        //WaveParticle newParticle(Vector3(0.0, 0.0, 0.0), direction, (float)g_TimerGame.TotalTime(), initialParticleRadius);
+        //// We need to figure out how to measure "angle" for  parallel waves. Important for diffraction.
+        //newParticle.m_amplitude = 0.15;
+        //newParticle.m_particleSize = 1.0;
+        //AddParticle(newParticle);
 
-        //for (int i = 0; i < numPoints; i++)
-        //{
-        //    float x = 3.0f;
-        //    float y = 0;
+        const uint32_t numWaveParticles = 10000;
 
+        std::uniform_real_distribution<float> uniformZeroToOne(0.0f, 1.0f);
 
-        //    Vector3 direction(0.0f, 1.0f, 0.0f);
-        //    direction *= speed;
-        //    WaveParticle newParticle(Vector3(x + (initialParticleRadius * i), y, zCoord), direction, (float)g_TimerGame.TotalTime(), initialParticleRadius);
-        //    // We need to figure out how to measure "angle" for  parallel waves. Important for diffraction.
-        //    newParticle.m_dispersionAngle = 0.0f;
-        //    AddParticle(newParticle);
-        //}
-
-        // for (int i = 0; i < numPoints; i++)
-        // {
-        //     float x = 3.0f;
-        //     float y = 60;
-
-
-        //     Vector3 direction(0.0f, -1.0f, 0.0f);
-        //     direction *= speed;
-        //     WaveParticle newParticle(Vector3(x + (initialParticleRadius * i), y, zCoord), direction, (float)g_TimerGame.TotalTime(), initialParticleRadius);
-        //     // We need to figure out how to measure "angle" for  parallel waves. Important for diffraction.
-        //     newParticle.m_dispersionAngle = 0.0f;
-        //     AddParticle(newParticle);
-        // }
-
-        // const int numPoints = 16;
-
-        // auto angle = 0.0f;
-        // auto deltaTheta = TWO_PI / numPoints;
-        // // auto deltaTheta = TWO_PI / 16;
-
-        // angle += 2*deltaTheta;
-        
-        // auto genIntInRange = [](int min, int max)
-        // {
-        //     return rand() % max + min;
-        // };
-        
-        // Vector3 startPosition = Vector3(0.0f, 0.0f, zCoord);
-        
-        // for (int i = 0; i < numPoints; i++)
-        // {
-        //     Vector3 planeOrigin = Vector3(0.0f, 0.0f, zCoord);
-        //     Vector3 direction = Vector3(cos(angle), sin(angle), 0.0f);
-        //     direction = direction.Normalized();
-        //     direction *= speed;
-        //     WaveParticle newParticle(startPosition, direction, (float)g_TimerGame.TotalTime(), 20.f);
-        //     newParticle.m_dispersionAngle = deltaTheta;
-        //     AddParticle(newParticle);
-        
-        //     std::cout << "Particle direction: " << direction.Normalized() << std::endl;
-        //     std::cout << "Dispersion angle: " << deltaTheta << std::endl;
-
-        //     angle += deltaTheta;
-        // }
+        for (int i = 0; i < numWaveParticles; i++)
+        {
+            Farlor::Vector3 position(uniformZeroToOne(m_gen) * 10.f - 5.0f, uniformZeroToOne(m_gen) * 10.f - 5.0f, 0.0);
+            Farlor::Vector3 direction( uniformZeroToOne(m_gen) * 10.f - 5.0f, uniformZeroToOne(m_gen) * 10.f - 5.0f, 0.0);
+            float height = uniformZeroToOne(m_gen) * 0.1 + 0.2;
+            float radius = uniformZeroToOne(m_gen) * 0.05 + 0.1;
+            float speed = uniformZeroToOne(m_gen) * 0.5;
+            
+            WaveParticle newParticle(position, direction.Normalized(), (float)g_TimerGame.TotalTime(), radius, speed);
+            newParticle.m_amplitude = height;
+            AddParticle(newParticle);
+        }
     }
 
     void ParticleSystem::AddParticle(WaveParticle particle)
@@ -193,32 +152,14 @@ namespace Farlor
 
     void ParticleSystem::Update(float timestep)
     {
-        int sampleDensity = 1;
-        std::vector<WaveParticle> m_newParticles;
-
         for (int i = 0; i < m_numActualParticles; i++)
         {
             bool collision = false;
             float currentTime = g_TimerGame.TotalTime();
-            float timeMoved = currentTime - m_waveParticles[i].m_birthTime;
-
-            Vector3 newPoint = m_waveParticles[i].m_birthPosition + m_waveParticles[i].m_direction * timeMoved;
-            Vector3 oldPoint = m_waveParticles[i].m_currentPosition;
-            Vector3 normDirection = m_waveParticles[i].m_direction.Normalized();
-            
-            // timeMoved = (float)m_timer.GetCurrentTime() - m_waveParticles[i].m_birthTime;
-            m_waveParticles[i].m_currentPosition = m_waveParticles[i].m_birthPosition + m_waveParticles[i].m_direction * timeMoved;
-            //m_waveParticles[i].m_amplitude = m_waveParticles[i].m_amplitude - (g_amplitudeDropRate * timeMoved);
-
+            float timeMoved = currentTime - m_waveParticles[i].m_birthTime;            
+            m_waveParticles[i].m_currentPosition = m_waveParticles[i].m_birthPosition + m_waveParticles[i].m_direction * (timeMoved * m_waveParticles[i].m_speed);
             m_waveParticles[i].m_timeMoved = timeMoved;
         }
-
-        for (int i = 0; i < m_newParticles.size(); i++)
-        {
-            // std::cout << "Adding particle" << std::endl;
-            AddParticle(m_newParticles[i]);
-        }
-
         KillParticles();
     }
 
