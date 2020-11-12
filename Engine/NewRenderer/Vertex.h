@@ -40,11 +40,11 @@ namespace Farlor
         Vector3 m_position;
         Vector2 m_uv;
         float m_amplitude;
-        float m_angle;
-        Vector3 m_origin;
 
         WaveParticleVertex();
-        WaveParticleVertex(float x, float y, float z, float u, float v, float amplitude, float angle, Vector3 origin);
+        WaveParticleVertex(float x, float y, float z, float u, float v, float amplitude);
+
+        bool operator==(const WaveParticleVertex& other) const;
     };
 
     struct VertexPositionUVNormal

@@ -25,8 +25,8 @@ namespace Farlor
     extern Renderer g_RenderingSystem;
     extern Farlor::Timer g_TimerGame;
 
-    static float zCoord = 10.0f;
-    static float speed = 20.0f;
+    static float zCoord = 0.0f;
+    static float speed = 0.0f;
     static float g_amplitudeDropRate = 0.001f;
 
     const float PI = 3.141592f;
@@ -37,7 +37,7 @@ namespace Farlor
         , m_currentPosition(m_birthPosition)
         , m_direction(direction)
         , m_amplitude{ 1.0f }
-        , m_dispersionAngle{ TWO_PI / 8.0f }
+        , m_dispersionAngle{ 0.0f }
         , m_birthTime(birthTime)
         , m_particleSize(size)
         , m_active(isActive)
@@ -60,7 +60,6 @@ namespace Farlor
         , m_particleSize(0.0)
         , m_vertexCount(0)
         , m_indexCount(0)
-        , m_cbPerObject{}
     {
         m_vertices = nullptr;
         m_indices = nullptr;
@@ -76,7 +75,7 @@ namespace Farlor
                     Vector3(0.0f, 0.0f, 0.0f), // Birth Pos
                     Vector3(1.0f, 0.0f, 0.0f), // Dir of Travel
                     0.0f, // Birth time
-                    20.0f, // Particle Size
+                    1.0f, // Particle Size
                     false // isActive
                 )
             );
@@ -101,22 +100,29 @@ namespace Farlor
     void ParticleSystem::StartRandomWave()
     {
 
-        const int numPoints = 15;
-        const float initialParticleRadius = 20;
+        const int numPoints = 1;
+        const float initialParticleRadius = 1;
 
-        for (int i = 0; i < numPoints; i++)
-        {
-            float x = 3.0f;
-            float y = 0;
+        Vector3 direction(1.0f, 0.0f, 0.0f);
+        direction *= speed;
+        WaveParticle newParticle(Vector3(0.0, 0.0, 0.0), direction, (float)g_TimerGame.TotalTime(), initialParticleRadius);
+        // We need to figure out how to measure "angle" for  parallel waves. Important for diffraction.
+        newParticle.m_dispersionAngle = 0.0f;
+        AddParticle(newParticle);
+
+        //for (int i = 0; i < numPoints; i++)
+        //{
+        //    float x = 3.0f;
+        //    float y = 0;
 
 
-            Vector3 direction(0.0f, 1.0f, 0.0f);
-            direction *= speed;
-            WaveParticle newParticle(Vector3(x + (initialParticleRadius * i), y, zCoord), direction, (float)g_TimerGame.TotalTime(), initialParticleRadius);
-            // We need to figure out how to measure "angle" for  parallel waves. Important for diffraction.
-            newParticle.m_dispersionAngle = 0.0f;
-            AddParticle(newParticle);
-        }
+        //    Vector3 direction(0.0f, 1.0f, 0.0f);
+        //    direction *= speed;
+        //    WaveParticle newParticle(Vector3(x + (initialParticleRadius * i), y, zCoord), direction, (float)g_TimerGame.TotalTime(), initialParticleRadius);
+        //    // We need to figure out how to measure "angle" for  parallel waves. Important for diffraction.
+        //    newParticle.m_dispersionAngle = 0.0f;
+        //    AddParticle(newParticle);
+        //}
 
         // for (int i = 0; i < numPoints; i++)
         // {
@@ -905,11 +911,7 @@ namespace Farlor
             AddParticle(m_newParticles[i]);
         }
 
-        // std::cout << "New Particle Number: " << m_numActualParticles << std::endl;
-
         KillParticles();
-
-        // std::cout << "Number of particles: " << m_numActualParticles << std::endl;
     }
 
     void ParticleSystem::KillParticles()
@@ -960,8 +962,8 @@ namespace Farlor
 
         // TODO: Why do we need 6 times the number of vertices
         // Number of vertices is 6 as each particle becomes a quad of 2 triangles
-        m_vertexCount = m_maxParticles * 6;
-        m_indexCount = m_vertexCount;
+        m_vertexCount = m_maxParticles;
+        m_indexCount = m_maxParticles;
         m_vertices = new WaveParticleVertex[m_vertexCount];
         assert(m_vertices);
         memset(m_vertices, 0, sizeof(WaveParticleVertex) * m_vertexCount);
@@ -1057,19 +1059,6 @@ namespace Farlor
             FARLOR_LOG_ERROR("Failed to create input layout: WaveParticleVertex::s_layout")
         }
 
-        // Create constant buffer
-        D3D11_BUFFER_DESC cbd = {0};
-        cbd.Usage = D3D11_USAGE_DEFAULT;
-        cbd.ByteWidth = sizeof(ParticleSystem::cbPerObject);
-        cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        cbd.CPUAccessFlags = 0;
-        cbd.MiscFlags = 0;
-        result = pDevice->CreateBuffer(&cbd, 0, &m_cbPerObjectBuffer);
-        if (FAILED(result))
-        {
-            FARLOR_LOG_ERROR("Failed to create ParticleSystem::cbPerObject")
-        }
-
         // Set raster desc
         D3D11_RASTERIZER_DESC rasterDesc;
         ZeroMemory(&rasterDesc, sizeof(rasterDesc));
@@ -1113,67 +1102,16 @@ namespace Farlor
             Vector2 yDir{0.0f, 1.0f};
             Vector2 particleDir{m_waveParticles[i].m_direction.x, m_waveParticles[i].m_direction.y};
             particleDir = particleDir.Normalized();
-            float angle = atan2(xDir.Dot(particleDir), yDir.Dot(particleDir));
+            // TODO: Angle is no longer needed as we are drawing as points
+            float angle = 0.0;// atan2(xDir.Dot(particleDir), yDir.Dot(particleDir));
             
             // Bottom Left
-            m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x - particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y - waveFrontSize;
-            m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
-            m_vertices[index].m_uv.x = 0.0f;
-            m_vertices[index].m_uv.y = 1.0f;
-            m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
-            m_vertices[index].m_angle = angle;
-            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
-            index++;
-            // Top Left
-            m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x - particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y + waveFrontSize;
+            m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x;// -particleSize;
+            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y;// -waveFrontSize;
             m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
             m_vertices[index].m_uv.x = 0.0f;
             m_vertices[index].m_uv.y = 0.0f;
             m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
-            m_vertices[index].m_angle = angle;
-            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
-            index++;
-            // Bottom Right
-            m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x + particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y - waveFrontSize;
-            m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
-            m_vertices[index].m_uv.x = 1.0f;
-            m_vertices[index].m_uv.y = 1.0f;
-            m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
-            m_vertices[index].m_angle = angle;
-            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
-            index++;
-            // Bottom Right
-            m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x + particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y - waveFrontSize;
-            m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
-            m_vertices[index].m_uv.x = 1.0f;
-            m_vertices[index].m_uv.y = 1.0f;
-            m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
-            m_vertices[index].m_angle = angle;
-            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
-            index++;
-            // Top Left
-            m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x - particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y + waveFrontSize;
-            m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
-            m_vertices[index].m_uv.x = 0.0f;
-            m_vertices[index].m_uv.y = 0.0f;
-            m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
-            m_vertices[index].m_angle = angle;
-            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
-            index++;
-            // Top Right
-            m_vertices[index].m_position.x = m_waveParticles[i].m_currentPosition.x + particleSize;
-            m_vertices[index].m_position.y = m_waveParticles[i].m_currentPosition.y + waveFrontSize;
-            m_vertices[index].m_position.z = m_waveParticles[i].m_currentPosition.z;
-            m_vertices[index].m_uv.x = 1.0f;
-            m_vertices[index].m_uv.y = 0.0f;
-            m_vertices[index].m_amplitude = m_waveParticles[i].m_amplitude;
-            m_vertices[index].m_angle = angle;
-            m_vertices[index].m_origin = m_waveParticles[i].m_currentPosition;
             index++;
         }
 
@@ -1204,23 +1142,15 @@ namespace Farlor
         pDeviceContext->PSSetShader(m_pPixelShader, 0, 0);
         pDeviceContext->IASetInputLayout(m_inputLayout);
 
-        DirectX::XMMATRIX world = DirectX::XMMatrixIdentity();
-
-        DirectX::XMMATRIX wvp = world * g_RenderingSystem.m_camView * g_RenderingSystem.m_camProjection;
-        m_cbPerObject.WVP = DirectX::XMMatrixTranspose(wvp);
-
-        pDeviceContext->UpdateSubresource(m_cbPerObjectBuffer, 0, 0, &m_cbPerObject, 0, 0);
-        pDeviceContext->VSSetConstantBuffers(0, 1, &m_cbPerObjectBuffer);
-
         pDeviceContext->RSSetState(m_rasterState);
 
         pDeviceContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
         pDeviceContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-        pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
         pDeviceContext->PSSetShaderResources(0, 1, &pParticleTextureSRView);
         pDeviceContext->PSSetSamplers(0, 1, &pWPSampleState);
 
-        pDeviceContext->DrawIndexed(m_numActualParticles * 6, 0, 0);
+        pDeviceContext->DrawIndexed(m_numActualParticles, 0, 0);
     }
 }

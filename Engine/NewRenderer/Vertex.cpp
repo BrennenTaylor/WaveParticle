@@ -68,33 +68,29 @@ namespace Farlor
         },
         {
             "AMPLITUDE", 0, DXGI_FORMAT_R32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0
-        },
-        {
-            "ANGLE", 0, DXGI_FORMAT_R32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0
-        },
-        {
-            "ORIGIN", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 28, D3D11_INPUT_PER_VERTEX_DATA, 0
-        },
+        }
     };
 
-    uint32_t WaveParticleVertex::s_numElements = 5;
+    uint32_t WaveParticleVertex::s_numElements = 3;
 
     WaveParticleVertex::WaveParticleVertex()
         : m_position{0.0f, 0.0f, 0.0f}
         , m_uv{0.0f, 0.0f}
         , m_amplitude{1.0f}
-        , m_angle{0.0f}
-        , m_origin(0.0f, 0.0f, 0.0f)
     {
     }
 
-    WaveParticleVertex::WaveParticleVertex(float x, float y, float z, float u, float v, float amplitude, float angle, Vector3 origin)
+    WaveParticleVertex::WaveParticleVertex(float x, float y, float z, float u, float v, float amplitude)
         : m_position{x, y, z}
         , m_uv{u, v}
         , m_amplitude{amplitude}
-        , m_angle{angle}
-        , m_origin(origin)
     {
+    }
+
+    bool WaveParticleVertex::operator==(const WaveParticleVertex& other) const {
+        return (Vector3)m_position == (Vector3)other.m_position
+            && (Vector2)m_uv == (Vector2)other.m_uv
+            && (Vector2)m_amplitude == (Vector2)other.m_amplitude;
     }
 
     //  Vertex Position UV

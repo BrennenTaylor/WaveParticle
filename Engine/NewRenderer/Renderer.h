@@ -76,17 +76,27 @@ class Renderer
     private:
         HWND m_gameWindowHandle;
 
-        IDXGISwapChain* m_pSwapChain;
+        IDXGISwapChain* m_pSwapChain = nullptr;
 
-        ID3D11Device* m_pDevice;
-        ID3D11DeviceContext* m_pDeviceContext;
-        ID3D11RenderTargetView* m_pRenderTargetView;
-        ID3D11DepthStencilView* m_pDSV;
-        ID3D11Texture2D* m_depthStencilBuffer;
-        ID3D11ShaderResourceView* m_pDepthScencilSRV;
+        ID3D11Device* m_pDevice = nullptr;
+        ID3D11DeviceContext* m_pDeviceContext = nullptr;
+        ID3D11Texture2D* m_pBackBuffer = nullptr;
+        ID3D11RenderTargetView* m_pBackBufferRTV = nullptr;
+        
+        ID3D11Texture2D* m_pWindowDSB = nullptr;
+        ID3D11DepthStencilView* m_pWindowDSV = nullptr;
+        ID3D11ShaderResourceView* m_pWindowDSSRV = nullptr;
 
-        ID3D11RasterizerState* m_rasterState;
-        ID3D11RasterizerState* m_rasterStateNoCull;
+        ID3D11Texture2D* m_pWaveParticleDSB = nullptr;
+        ID3D11DepthStencilView* m_pWaveParticleDSV = nullptr;
+        ID3D11ShaderResourceView* m_pWaveParticleDSSRV = nullptr;
+
+        D3D11_VIEWPORT m_mainViewport;
+        D3D11_VIEWPORT m_waveParticleViewport;
+
+
+        ID3D11RasterizerState* m_pCullRS = nullptr;
+        ID3D11RasterizerState* m_pNoCullRS = nullptr;
 
         ID3D11Buffer* m_cbTransformsBuffer;
         cbTransforms m_cbTransforms;
@@ -107,7 +117,8 @@ class Renderer
 
         ID3D11DepthStencilState* m_pDSState;
 
-        ID3D11BlendState* m_pAlphaBlendState;
+        ID3D11BlendState* m_pAdditiveBlendState = nullptr;
+        ID3D11BlendState* m_pNoBlendState = nullptr;
 
         std::vector<std::string> m_shaderFilenames;
         std::map<std::string, Shader> m_shaders;
@@ -128,9 +139,6 @@ class Renderer
         std::vector<ParticleSystem> m_particleSystems;
 
         ID3D11SamplerState* m_pWPSampleState;
-
-        ID3D11BlendState* m_pEnableAlphaBlending;
-        ID3D11BlendState* m_pDisableAlphaBlending;
 
         ID3D11DepthStencilState * pDSState;
 

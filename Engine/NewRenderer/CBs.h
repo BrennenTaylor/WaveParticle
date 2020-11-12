@@ -40,7 +40,7 @@ namespace Farlor
 
     struct cbCameraParams
     {
-        Vector3 m_position;
+        Vector3 m_eyePosition;
         float _pad;
     };
 }

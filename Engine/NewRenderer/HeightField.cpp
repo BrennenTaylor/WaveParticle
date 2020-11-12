@@ -14,8 +14,10 @@ namespace Farlor
     extern Renderer g_RenderingSystem;
 
     HeightField::HeightField()
-        : m_width{0}
-        , m_height{0}
+        : m_width{ 0 }
+        , m_height{ 0 }
+        , m_corner{ 0.0f, 0.0f, 0.0f }
+        , m_numGridCells{ 1 }
         , m_vertexCount{0}
         , m_indexCount{0}
         , m_pVertexBuffer{nullptr}
@@ -28,16 +30,19 @@ namespace Farlor
     {
     }
 
-    void HeightField::Initialize(int width, int height, ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext)
+    void HeightField::Initialize(int width, int height, const Farlor::Vector3& corner, uint32_t numGridCells, ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext)
     {
         HRESULT result = ERROR_SUCCESS;
 
-        // Bottom left corner is at 0, 0
-        // Top right is (m_width, m_height)
+        // NOTE: Heightfield is in world space, y axis is up
+        // Bottom left corner is at (corner.x, corner.y, corner.z)
+        // Top right is (corner.x + m_width, corner.y, corner.z + m_height)
         // For mapping purposes, bottom left uv is (0, 0)
         // Top right is (1, 1)
         m_width = width;
         m_height = height;
+        m_corner = corner;
+        m_numGridCells = numGridCells;
 
         ID3DBlob* pErrorMessage = nullptr;
         ID3DBlob* pVertexShaderBuffer = nullptr;
@@ -90,7 +95,7 @@ namespace Farlor
         // Create constatnt buffer
         D3D11_BUFFER_DESC cbd = {0};
         cbd.Usage = D3D11_USAGE_DEFAULT;
-        cbd.ByteWidth = sizeof(ParticleSystem::cbPerObject);
+        cbd.ByteWidth = sizeof(HeightField::cbPerObject);
         cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
         cbd.CPUAccessFlags = 0;
         cbd.MiscFlags = 0;
@@ -104,7 +109,8 @@ namespace Farlor
         InitializeBuffers(pDevice, pDeviceContext);
     }
 
-    void HeightField::Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext, ID3D11ShaderResourceView* pWSRView, ID3D11SamplerState* pWPSampleState)
+    void HeightField::Render(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext, ID3D11ShaderResourceView* pWSRView, ID3D11SamplerState* pWPSampleState,
+        ID3D11Buffer* pCameraCBBuffer)
     {
         unsigned int stride = sizeof(VertexPositionColorUV);
         unsigned int offset = 0;
@@ -129,6 +135,11 @@ namespace Farlor
         pDeviceContext->VSSetShaderResources(0, 1, &pWSRView);
         pDeviceContext->VSSetSamplers(0, 1, &pWPSampleState);
 
+        // We need to set a PS contant buffer for camera data
+        ID3D11Buffer* pConstantBuffers[1];
+        pConstantBuffers[0] = pCameraCBBuffer;
+        pDeviceContext->PSSetConstantBuffers(0, 1, pConstantBuffers);
+
         pDeviceContext->DrawIndexed(m_indexCount, 0, 0);
     }
 
@@ -137,8 +148,8 @@ namespace Farlor
         HRESULT result = ERROR_SUCCESS;
 
         // Number of grid cells within mesh?
-        int numSubX = 500;
-        int numSubZ = 500;
+        int numSubX = m_numGridCells;
+        int numSubZ = m_numGridCells;
 
         // Only 6 verts per square, and (x-1)*(z-1) squares
         // TODO: Optimize this to reuse vertices
@@ -149,111 +160,99 @@ namespace Farlor
         unsigned int* pRawIndices = new unsigned int[m_indexCount];
 
         int index = 0;
-        float positionX = 0.0f;
-        float positionZ = 0.0f;
         for(int j = 0; j < (numSubZ - 1); j++)
         {
             for (int i = 0; i < (numSubX - 1); i++)
             {
                 // LINE 1
-    			// Upper left.
-    			positionX = (float)i;
-    			positionZ = (float)(j+1);
-                positionX = (positionX/numSubX)*m_width;
-                positionZ = (positionZ/numSubZ)*m_height;
+                // Upper left.
+                {
+                    float gridPositionX = (float)i;
+                    float gridPositionZ = (float)(j + 1);
+                    float positionX = (gridPositionX / numSubX) * m_width + m_corner.x;
+                    float positionZ = (gridPositionZ / numSubZ) * m_height + m_corner.z;
 
-                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/m_height);
-                pRawIndices[index] = index;
-    			index++;
+                    pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                    pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                    pRawVertices[index].m_uv = Vector2((gridPositionX / numSubX), (gridPositionZ / numSubZ));
+                    pRawIndices[index] = index;
+                    index++;
+                }
 
-    			// Upper right.
-    			positionX = (float)(i+1);
-    			positionZ = (float)(j+1);
-                positionX = (positionX/numSubX)*m_width;
-                positionZ = (positionZ/numSubZ)*m_height;
+                // Upper right.
+                {
+                    float gridPositionX = (float)(i + 1);
+                    float gridPositionZ = (float)(j + 1);
+                    float positionX = (gridPositionX / numSubX) * m_width + m_corner.x;
+                    float positionZ = (gridPositionZ / numSubZ) * m_height + m_corner.z;
 
-                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-                pRawIndices[index] = index;
-    			index++;
+                    pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                    pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                    pRawVertices[index].m_uv = Vector2((gridPositionX / numSubX), (gridPositionZ / numSubZ));
+                    pRawIndices[index] = index;
+                    index++;
+                }
 
-    			// LINE 2
-    			// Upper right.
-    			// positionX = (float)(i+1);
-    			// positionZ = (float)(j+1);
-                //
-    			// vertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-    			// vertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                // vertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-    			// indices[index] = index;
-    			// index++;
-
-    			// Bottom right.
-    			positionX = (float)(i+1);
-    			positionZ = (float)j;
-                positionX = (positionX/numSubX)*m_width;
-                positionZ = (positionZ/numSubZ)*m_height;
+                // Bottom right.
+                {
+                    float gridPositionX = (float)(i + 1);
+                    float gridPositionZ = (float)j;
+                    float positionX = (gridPositionX / numSubX) * m_width + m_corner.x;
+                    float positionZ = (gridPositionZ / numSubZ) * m_height + m_corner.z;
 
 
-                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-                pRawIndices[index] = index;
-    			index++;
-
-    			// LINE 3
-    			// Bottom right.
-    			positionX = (float)(i+1);
-    			positionZ = (float)j;
-                positionX = (positionX/numSubX)*m_width;
-                positionZ = (positionZ/numSubZ)*m_height;
-
-
-                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-                pRawIndices[index] = index;
-    			index++;
-
-    			// Bottom left.
-    			// positionX = (float)i;
-    			// positionZ = (float)j;
-                //
-    			// vertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-    			// vertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                // vertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-    			// indices[index] = index;
-    			// index++;
-
-    			// LINE 4
-    			// Bottom left.
-    			positionX = (float)i;
-    			positionZ = (float)j;
-                positionX = (positionX/numSubX)*m_width;
-                positionZ = (positionZ/numSubZ)*m_height;
+                    pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                    pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                    pRawVertices[index].m_uv = Vector2((gridPositionX / numSubX), (gridPositionZ / numSubZ));
+                    pRawIndices[index] = index;
+                    index++;
+                }
+                // LINE 3
+                // Bottom right.
+                {
+                    float gridPositionX = (float)(i + 1);
+                    float gridPositionZ = (float)j;
+                    float positionX = (gridPositionX / numSubX) * m_width + m_corner.x;
+                    float positionZ = (gridPositionZ / numSubZ) * m_height + m_corner.z;
 
 
-                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-                pRawIndices[index] = index;
-    			index++;
+                    pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                    pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                    pRawVertices[index].m_uv = Vector2((gridPositionX / numSubX), (gridPositionZ / numSubZ));
+                    pRawIndices[index] = index;
+                    index++;
+                }
 
-    			// Upper left.
-    			positionX = (float)i;
-    			positionZ = (float)(j+1);
-                positionX = (positionX/numSubX)*m_width;
-                positionZ = (positionZ/numSubZ)*m_height;
+                // LINE 4
+                // Bottom left.
+                {
+                    float gridPositionX = (float)i;
+                    float gridPositionZ = (float)j;
+                    float positionX = (gridPositionX / numSubX) * m_width + m_corner.x;
+                    float positionZ = (gridPositionZ / numSubZ) * m_height + m_corner.z;
 
 
-                pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
-                pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-                pRawVertices[index].m_uv = Vector2(positionX/(float)m_width, positionZ/(float)m_height);
-                pRawIndices[index] = index;
-    			index++;
+                    pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                    pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                    pRawVertices[index].m_uv = Vector2((gridPositionX / numSubX), (gridPositionZ / numSubZ));
+                    pRawIndices[index] = index;
+                    index++;
+                }
+
+                // Upper left.
+                {
+                    float gridPositionX = (float)i;
+                    float gridPositionZ = (float)(j + 1);
+                    float positionX = (gridPositionX / numSubX) * m_width + m_corner.x;
+                    float positionZ = (gridPositionZ / numSubZ) * m_height + m_corner.z;
+
+
+                    pRawVertices[index].m_position = Vector3(positionX, 0.0f, positionZ);
+                    pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                    pRawVertices[index].m_uv = Vector2((gridPositionX / numSubX), (gridPositionZ / numSubZ));
+                    pRawIndices[index] = index;
+                    index++;
+                }
             }
         }
 

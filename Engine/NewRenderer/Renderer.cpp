@@ -15,6 +15,9 @@
 
 namespace Farlor
 {
+    const uint32_t WaveParticleHeightmapRenderTargetSize = 512;
+
+
     extern TransformManager g_TransformManager;
     extern Camera g_MainCamera;
 
@@ -59,62 +62,111 @@ namespace Farlor
             &swapChainDesc.m_dxgiSwapChainDesc, &m_pSwapChain, &m_pDevice, 0, &m_pDeviceContext);
 
         // Create back buffer
-        ID3D11Texture2D* pBackBuffer = nullptr;
-        result = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&pBackBuffer);
+        m_pBackBuffer = nullptr;
+        result = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&m_pBackBuffer);
 
         // Create render target
-        assert(pBackBuffer != nullptr);
-        result = m_pDevice->CreateRenderTargetView(pBackBuffer, 0, &m_pRenderTargetView);
-        pBackBuffer->Release();
+        assert(m_pBackBuffer != nullptr);
+        result = m_pDevice->CreateRenderTargetView(m_pBackBuffer, 0, &m_pBackBufferRTV);
+        m_pBackBuffer->Release();
 
         // Describe depth stencil buffer
-        D3D11_TEXTURE2D_DESC depthStencilDesc;
-        ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
-        depthStencilDesc.Width = m_width;
-        depthStencilDesc.Height = m_height;
-        depthStencilDesc.MipLevels = 1;
-        depthStencilDesc.ArraySize = 1;
-        depthStencilDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
-        depthStencilDesc.SampleDesc.Count = 1;
-        depthStencilDesc.SampleDesc.Quality = 0;
-        depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-        depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
-        depthStencilDesc.CPUAccessFlags = 0;
-        depthStencilDesc.MiscFlags = 0;
-
-        D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-        ZeroMemory(&dsvDesc, sizeof(dsvDesc));
-        dsvDesc.Flags = 0;
-        dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-        dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-
-        D3D11_SHADER_RESOURCE_VIEW_DESC dssrvDesc;
-        ZeroMemory(&dssrvDesc, sizeof(dssrvDesc));
-        dssrvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-        dssrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-        dssrvDesc.Texture2D.MipLevels = 1;
-
-        result = m_pDevice->CreateTexture2D(&depthStencilDesc, NULL, &m_depthStencilBuffer);
-        if (FAILED(result))
+        // Dimensions need to be the size of the window
         {
-            FARLOR_LOG_ERROR("Failed to create depth stencil texture 2d")
-        }
+            D3D11_TEXTURE2D_DESC depthStencilDesc;
+            ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
+            depthStencilDesc.Width = m_width;
+            depthStencilDesc.Height = m_height;
+            depthStencilDesc.MipLevels = 1;
+            depthStencilDesc.ArraySize = 1;
+            depthStencilDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+            depthStencilDesc.SampleDesc.Count = 1;
+            depthStencilDesc.SampleDesc.Quality = 0;
+            depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+            depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+            depthStencilDesc.CPUAccessFlags = 0;
+            depthStencilDesc.MiscFlags = 0;
 
-        result = m_pDevice->CreateDepthStencilView(m_depthStencilBuffer, &dsvDesc, &m_pDSV);
-        if (FAILED(result))
-        {
-            FARLOR_LOG_ERROR("Failed to create depth stencil view")
-        }
+            D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+            ZeroMemory(&dsvDesc, sizeof(dsvDesc));
+            dsvDesc.Flags = 0;
+            dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+            dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 
-        result = m_pDevice->CreateShaderResourceView(m_depthStencilBuffer, &dssrvDesc, &m_pDepthScencilSRV);
-        if (FAILED(result))
-        {
-            FARLOR_LOG_ERROR("Failed to create depth stencil SRV")
-        }
+            D3D11_SHADER_RESOURCE_VIEW_DESC dssrvDesc;
+            ZeroMemory(&dssrvDesc, sizeof(dssrvDesc));
+            dssrvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+            dssrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            dssrvDesc.Texture2D.MipLevels = 1;
 
+            result = m_pDevice->CreateTexture2D(&depthStencilDesc, NULL, &m_pWindowDSB);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create depth stencil texture 2d")
+            }
+
+            result = m_pDevice->CreateDepthStencilView(m_pWindowDSB, &dsvDesc, &m_pWindowDSV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create depth stencil view")
+            }
+
+            result = m_pDevice->CreateShaderResourceView(m_pWindowDSB, &dssrvDesc, &m_pWindowDSSRV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create depth stencil SRV")
+            }
+        }
         // Set render target
-        m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDSV);
+        m_pDeviceContext->OMSetRenderTargets(1, &m_pBackBufferRTV, m_pWindowDSV);
 
+        // Describe wave particle texture depth stencil buffer
+        // Dimensions need to be the size of the wave particle render target
+        {
+            D3D11_TEXTURE2D_DESC depthStencilDesc;
+            ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
+            depthStencilDesc.Width = WaveParticleHeightmapRenderTargetSize;
+            depthStencilDesc.Height = WaveParticleHeightmapRenderTargetSize;
+            depthStencilDesc.MipLevels = 1;
+            depthStencilDesc.ArraySize = 1;
+            depthStencilDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+            depthStencilDesc.SampleDesc.Count = 1;
+            depthStencilDesc.SampleDesc.Quality = 0;
+            depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+            depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+            depthStencilDesc.CPUAccessFlags = 0;
+            depthStencilDesc.MiscFlags = 0;
+
+            D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+            ZeroMemory(&dsvDesc, sizeof(dsvDesc));
+            dsvDesc.Flags = 0;
+            dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+            dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+
+            D3D11_SHADER_RESOURCE_VIEW_DESC dssrvDesc;
+            ZeroMemory(&dssrvDesc, sizeof(dssrvDesc));
+            dssrvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+            dssrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            dssrvDesc.Texture2D.MipLevels = 1;
+
+            result = m_pDevice->CreateTexture2D(&depthStencilDesc, NULL, &m_pWaveParticleDSB);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create depth stencil texture 2d")
+            }
+
+            result = m_pDevice->CreateDepthStencilView(m_pWaveParticleDSB, &dsvDesc, &m_pWaveParticleDSV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create depth stencil view")
+            }
+
+            result = m_pDevice->CreateShaderResourceView(m_pWaveParticleDSB, &dssrvDesc, &m_pWaveParticleDSSRV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create depth stencil SRV")
+            }
+        }
 
         D3D11_DEPTH_STENCIL_DESC dsDesc;
         ZeroMemory(&dsDesc, sizeof(dsDesc));
@@ -145,35 +197,50 @@ namespace Farlor
         }
 
         // Set raster desc
-        RasterizerStateDesc rasterDesc;
-        ZeroMemory(&rasterDesc, sizeof(rasterDesc));
-        rasterDesc.m_rasterDesc.CullMode = D3D11_CULL_BACK;
-        rasterDesc.m_rasterDesc.FillMode = D3D11_FILL_SOLID;
-        result = m_pDevice->CreateRasterizerState(&rasterDesc.m_rasterDesc, &m_rasterState);
-        if (FAILED(result))
         {
-            std::cout << "Failed to create raster state: D3D11_CULL_BACK, D3D11_FILL_SOLID" << std::endl;
+            RasterizerStateDesc rasterDesc;
+            ZeroMemory(&rasterDesc, sizeof(rasterDesc));
+            rasterDesc.m_rasterDesc.CullMode = D3D11_CULL_BACK;
+            rasterDesc.m_rasterDesc.FillMode = D3D11_FILL_SOLID;
+            result = m_pDevice->CreateRasterizerState(&rasterDesc.m_rasterDesc, &m_pCullRS);
+            if (FAILED(result))
+            {
+                std::cout << "Failed to create raster state: D3D11_CULL_BACK, D3D11_FILL_SOLID" << std::endl;
+            }
         }
-        m_pDeviceContext->RSSetState(m_rasterState);
+        m_pDeviceContext->RSSetState(m_pCullRS);
 
-        rasterDesc.m_rasterDesc.CullMode = D3D11_CULL_NONE;
-        rasterDesc.m_rasterDesc.FillMode = D3D11_FILL_SOLID;
-        result = m_pDevice->CreateRasterizerState(&rasterDesc.m_rasterDesc, &m_rasterStateNoCull);
-        if (FAILED(result))
         {
-            std::cout << "Failed to create raster state: D3D11_CULL_BACK, D3D11_FILL_SOLID" << std::endl;
+            RasterizerStateDesc rasterDesc;
+            ZeroMemory(&rasterDesc, sizeof(rasterDesc));
+            rasterDesc.m_rasterDesc.CullMode = D3D11_CULL_NONE;
+            rasterDesc.m_rasterDesc.FillMode = D3D11_FILL_SOLID;
+            result = m_pDevice->CreateRasterizerState(&rasterDesc.m_rasterDesc, &m_pNoCullRS);
+            if (FAILED(result))
+            {
+                std::cout << "Failed to create raster state: D3D11_CULL_BACK, D3D11_FILL_SOLID" << std::endl;
+            }
         }
 
         // Create and set viewport
         // TODO: Drive this from the camera
-        D3D11_VIEWPORT viewport = { 0 };
-        viewport.TopLeftX = 0.0f;
-        viewport.TopLeftY = 0.0f;
-        viewport.Width = (float)m_width;
-        viewport.Height = (float)m_height;
-        viewport.MinDepth = 0.0f;
-        viewport.MaxDepth = 1.0f;
-        m_pDeviceContext->RSSetViewports(1, &viewport);
+        m_mainViewport = { 0 };
+        m_mainViewport.TopLeftX = 0.0f;
+        m_mainViewport.TopLeftY = 0.0f;
+        m_mainViewport.Width = (float)m_width;
+        m_mainViewport.Height = (float)m_height;
+        m_mainViewport.MinDepth = 0.0f;
+        m_mainViewport.MaxDepth = 1.0f;
+        m_pDeviceContext->RSSetViewports(1, &m_mainViewport);
+
+        m_waveParticleViewport = { 0 };
+        m_waveParticleViewport.TopLeftX = 0.0f;
+        m_waveParticleViewport.TopLeftY = 0.0f;
+        m_waveParticleViewport.Width = (float)WaveParticleHeightmapRenderTargetSize;
+        m_waveParticleViewport.Height = (float)WaveParticleHeightmapRenderTargetSize;
+        m_waveParticleViewport.MinDepth = 0.0f;
+        m_waveParticleViewport.MaxDepth = 1.0f;
+
 
         // Create constatnt buffer
         D3D11_BUFFER_DESC cbd = { 0 };
@@ -251,30 +318,58 @@ namespace Farlor
         }
 
         // Create blend states
-        D3D11_BLEND_DESC blendDesc;
-        ZeroMemory(&blendDesc, sizeof(blendDesc));
-        blendDesc.RenderTarget[0].BlendEnable = true;
-        blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-        blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-        blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-        blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-        blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-        blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-        blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-        result = m_pDevice->CreateBlendState(&blendDesc, &m_pAlphaBlendState);
-
-        if (FAILED(result))
         {
-            FARLOR_LOG_ERROR("Failed to create blend state")
+            D3D11_BLEND_DESC additiveBlendDesc;
+            ZeroMemory(&additiveBlendDesc, sizeof(additiveBlendDesc));
+            additiveBlendDesc.RenderTarget[0].BlendEnable = true;
+            additiveBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+            additiveBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+            additiveBlendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+            additiveBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+            additiveBlendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+            additiveBlendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+            additiveBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+            result = m_pDevice->CreateBlendState(&additiveBlendDesc, &m_pAdditiveBlendState);
+
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create additive blend state")
+            }
+        }
+
+
+        // Create blend states
+        {
+            D3D11_BLEND_DESC noBlendDesc;
+            ZeroMemory(&noBlendDesc, sizeof(noBlendDesc));
+            noBlendDesc.RenderTarget[0].BlendEnable = false;
+            //noBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+            //noBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+            //noBlendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+            //noBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+            //noBlendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+            //noBlendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+            noBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+            result = m_pDevice->CreateBlendState(&noBlendDesc, &m_pNoBlendState);
+
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create no blend state")
+            }
         }
 
 
         // Wave Particle stuff
-        // We create a window sized texture resource which can be bound as a render target and a shader resource
+        // This can be any size, but it just cant be bigger than the window as a dsv is shared.
+        // TODO: Have our own dsv
+
+
+
         D3D11_TEXTURE2D_DESC waveParticleTextureDesc = { 0 };
-        waveParticleTextureDesc.Width = m_width;
-        waveParticleTextureDesc.Height = m_height;
+        waveParticleTextureDesc.Width = WaveParticleHeightmapRenderTargetSize;
+        waveParticleTextureDesc.Height = WaveParticleHeightmapRenderTargetSize;
         waveParticleTextureDesc.MipLevels = 1;
         waveParticleTextureDesc.ArraySize = 1;
         waveParticleTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -312,7 +407,7 @@ namespace Farlor
         }
 
         // Create vertex staging data
-        m_pHeightmapPositions = new Vector4[m_width * m_height];
+        m_pHeightmapPositions = new Vector4[WaveParticleHeightmapRenderTargetSize];
 
         D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
         ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
@@ -369,38 +464,6 @@ namespace Farlor
             FARLOR_LOG_ERROR("Failed to load texture: resources/Sprites/Particle.png")
         }
 
-        // Create an alpha enabled blend state description.
-        D3D11_BLEND_DESC blendStateDesc = { 0 };
-        blendStateDesc.RenderTarget[0].BlendEnable = TRUE;
-        blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-        blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-        blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-        blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_INV_DEST_ALPHA;
-        blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-        blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-        blendStateDesc.RenderTarget[0].RenderTargetWriteMask = 0x0f;
-
-        result = m_pDevice->CreateBlendState(&blendStateDesc, &m_pEnableAlphaBlending);
-        if (FAILED(result))
-        {
-            FARLOR_LOG_ERROR("Failed to create alpha blend state: blend enabled")
-        }
-
-        blendStateDesc.RenderTarget[0].BlendEnable = FALSE;
-        blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-        blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-        blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-        blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-        blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-        blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-        blendStateDesc.RenderTarget[0].RenderTargetWriteMask = 0x0f;
-
-        result = m_pDevice->CreateBlendState(&blendStateDesc, &m_pDisableAlphaBlending);
-        if (FAILED(result))
-        {
-            FARLOR_LOG_ERROR("Failed to create alpha blend state: blend disabled")
-        }
-
 
         // Depth test parameters
         dsDesc.DepthEnable = false;
@@ -433,29 +496,39 @@ namespace Farlor
 
         // ensure that our particle system and terrain systems initialized
         g_WaveParticles.InitializeBuffers(m_pDevice, m_pDeviceContext);
-        m_waterSurface.Initialize(100, 100, m_pDevice, m_pDeviceContext);
+        m_waterSurface.Initialize(10.0, 10.0, Farlor::Vector3(-5.0, 0.0, -5.0), 500, m_pDevice, m_pDeviceContext);
     }
 
     void Renderer::Render()
     {
-        m_camView = g_WaveParticleCamera.m_camView;
-        // Perspective
-        m_camProjection = DirectX::XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)m_width / m_height, 1.0f, 1000.0f);
 
         float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-        m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, clearColor);
-        m_pDeviceContext->ClearDepthStencilView(m_pDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+        // Clear main render target
+        {
 
-        m_pDeviceContext->OMSetRenderTargets(1, &m_pWPRTView, m_pDSV);
-        m_pDeviceContext->ClearRenderTargetView(m_pWPRTView, clearColor);
+            m_pDeviceContext->ClearRenderTargetView(m_pBackBufferRTV, clearColor);
+            m_pDeviceContext->ClearDepthStencilView(m_pWindowDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+        }
+
+        // Do wave particel rendering
+        
+        // Clear wave particle stuff
+        {
+            m_pDeviceContext->ClearRenderTargetView(m_pWPRTView, clearColor);
+            m_pDeviceContext->ClearDepthStencilView(m_pWaveParticleDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+        }
+
+        m_pDeviceContext->RSSetViewports(1, &m_waveParticleViewport);
+
+        m_pDeviceContext->OMSetRenderTargets(1, &m_pWPRTView, m_pWaveParticleDSV);
 
         // Render the wave particles
         // m_pDeviceContext->RSSetState(m_rasterState);
         m_pDeviceContext->OMSetDepthStencilState(pDSState, 0);
 
-        m_pDeviceContext->OMSetBlendState(m_pEnableAlphaBlending, 0, 0xffffffff);
+        m_pDeviceContext->OMSetBlendState(m_pAdditiveBlendState, 0, 0xffffffff);
         g_WaveParticles.Render(m_pDevice, m_pDeviceContext, m_pParticleTextureResourceView, m_pWPSampleState);
-        m_pDeviceContext->OMSetBlendState(m_pDisableAlphaBlending, 0, 0xffffffff);
+        m_pDeviceContext->OMSetBlendState(m_pNoBlendState, 0, 0xffffffff);
 
         // Read back the heightmap texture
         // m_pDeviceContext->CopyResource(m_pWaveParticleStagingResource, m_pWaveParticleRenderTarget);
@@ -468,13 +541,21 @@ namespace Farlor
         //
         // m_waterSurface.UpdateMesh(m_pHeightmapPositions);
 
+
+        // Set back to main viewport
+        // Perspective
+        m_camProjection = DirectX::XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)m_width / m_height, 1.0f, 1000.0f);
+
+
+        m_pDeviceContext->RSSetViewports(1, &m_mainViewport);
+
         m_camView = g_MainCamera.m_camView;
 
         m_pDeviceContext->ClearRenderTargetView(m_renderTargets["G-Normals"].m_pRTView, clearColor);
         m_pDeviceContext->ClearRenderTargetView(m_renderTargets["G-Diffuse"].m_pRTView, clearColor);
         m_pDeviceContext->ClearRenderTargetView(m_renderTargets["G-Specular"].m_pRTView, clearColor);
         m_pDeviceContext->ClearRenderTargetView(m_renderTargets["G-Position"].m_pRTView, clearColor);
-        m_pDeviceContext->ClearDepthStencilView(m_pDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+        m_pDeviceContext->ClearDepthStencilView(m_pWindowDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
         m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
 
@@ -497,7 +578,7 @@ namespace Farlor
         deferredRTViews[2] = m_renderTargets["G-Specular"].m_pRTView;
         deferredRTViews[3] = m_renderTargets["G-Position"].m_pRTView;
 
-        m_pDeviceContext->OMSetRenderTargets(4, deferredRTViews, m_pDSV);
+        m_pDeviceContext->OMSetRenderTargets(4, deferredRTViews, m_pWindowDSV);
 
         // Render all objects
         for (auto& renderComponent : m_renderingComponents)
@@ -505,7 +586,7 @@ namespace Farlor
             Render(renderComponent);
         }
 
-        m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, nullptr);
+        m_pDeviceContext->OMSetRenderTargets(1, &m_pBackBufferRTV, nullptr);
 
         ID3D11ShaderResourceView* resourceViews[4];
 
@@ -514,7 +595,7 @@ namespace Farlor
         resourceViews[2] = m_renderTargets["G-Specular"].m_pRTShaderResourceView;
         resourceViews[3] = m_renderTargets["G-Position"].m_pRTShaderResourceView;
 
-        m_pDeviceContext->OMSetBlendState(m_pAlphaBlendState, 0, 0xffffffff);
+        m_pDeviceContext->OMSetBlendState(m_pAdditiveBlendState, 0, 0xffffffff);
 
         // Render ambient light
         m_shaders["GBufferLightAmbient"].SetPipeline(m_pDeviceContext);
@@ -534,16 +615,22 @@ namespace Farlor
             RenderLight(lightComponent);
         }
 
-        m_pDeviceContext->OMSetBlendState(nullptr, 0, 0xffffffff);
+        m_pDeviceContext->OMSetBlendState(m_pNoBlendState, 0, 0xffffffff);
 
 
-        // Render the terrain
-        // m_pDeviceContext->ClearDepthStencilView(m_pDSV, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
-        m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDSV);
-        // m_pDeviceContext->RSSetState(m_rasterState);
+        // Render the height field
+        m_pDeviceContext->OMSetRenderTargets(1, &m_pBackBufferRTV, m_pWindowDSV);
 
-        m_pDeviceContext->RSSetState(m_rasterStateNoCull);
-        m_waterSurface.Render(m_pDevice, m_pDeviceContext, m_pWPSRView, m_pWPSampleState);
+        m_pDeviceContext->RSSetState(m_pNoCullRS);
+
+
+        // Note: Render lights handled this, so we probably dont need this, but we will do it again to be sure
+        DirectX::XMFLOAT3 pos;
+        DirectX::XMStoreFloat3(&pos, g_MainCamera.m_camPosition);
+        m_cbCameraParams.m_eyePosition = Vector3(pos.x, pos.y, pos.z);
+        m_pDeviceContext->UpdateSubresource(m_cbCameraParamsBuffer, 0, 0, &m_cbCameraParams, 0, 0);
+
+        m_waterSurface.Render(m_pDevice, m_pDeviceContext, m_pWPSRView, m_pWPSampleState, m_cbCameraParamsBuffer);
 
         m_pSwapChain->Present(0, 0);
     }
@@ -605,7 +692,7 @@ namespace Farlor
 
         DirectX::XMFLOAT3 pos;
         DirectX::XMStoreFloat3(&pos, g_MainCamera.m_camPosition);
-        m_cbCameraParams.m_position = Vector3(pos.x, pos.y, pos.z);
+        m_cbCameraParams.m_eyePosition = Vector3(pos.x, pos.y, pos.z);
 
         m_pDeviceContext->UpdateSubresource(m_cbCameraParamsBuffer, 0, 0, &m_cbCameraParams, 0, 0);
 

@@ -75,16 +75,7 @@ namespace Farlor
         // Initialize random timer
         srand ((unsigned int)time(0));
 
-        // g_WaveParticles.AddPlane(Plane(-1.0f, 0.0f, 0.0f, 140.0, 0.0, 0.0));
-        // g_WaveParticles.AddPlane(Plane(1.0f, 0.0f, 0.0f, -140.0, 0.0, 0.0));
-        g_WaveParticles.AddPlane(Plane(0.0f, -1.0f, 0.0f, 0.0, 170.0, 0.0));
-        g_WaveParticles.AddPlane(Plane(0.0f, 1.0f, 0.0f, 0.0, -170.0, 0.0));
-        // g_WaveParticles.AddSegments(LineSegment(-50.0f, 0.0f, -20.0f, 50.0f));
-        // g_WaveParticles.AddSegments(LineSegment(30.0f, 50.0f, 50.0f, 50.0f));
-        // g_WaveParticles.AddSegments(LineSegment(0.0f, 170.0f, 0.0f, 30.0f));
-        g_WaveParticles.AddSegments(LineSegment(100.0f, 30.0f, 30.0f, 30.0f));
-
-        g_WaveParticleCamera.m_camPosition = DirectX::XMVectorSet(0.0f, 0.0f, -200.0f, 0.0f);
+        //g_WaveParticleCamera.m_camPosition = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     int Engine::Run()

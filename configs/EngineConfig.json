@@ -3,38 +3,38 @@
     {
         "entities" :
         [
-            {
-                "TransformComponent" :
-                {
-                    "position" :
-                    {
-                        "x" : 65.0,
-                        "y" : 0.0,
-                        "z" : 40.0
-                    },
-                    "rotation" :
-                    {
-                        "x" : 0.0,
-                        "y" : 0.0,
-                        "z" : 0.0
-                    },
-                    "scale" :
-                    {
-                        "x" : 8.75,
-                        "y" : 6.0,
-                        "z" : 0.3
-                    }
-                },
-                "ParticlePhysicsComponent" :
-                {
-                    "mass" : 17.0
-                },
-                "RenderingComponent" :
-                {
-                    "mesh" : "Box.obj"
-                    /*"material" : 0*/
-                }
-            },
+            // {
+            //     "TransformComponent" :
+            //     {
+            //         "position" :
+            //         {
+            //             "x" : 0.0,
+            //             "y" : 0.0,
+            //             "z" : 0.0
+            //         },
+            //         "rotation" :
+            //         {
+            //             "x" : 0.0,
+            //             "y" : 0.0,
+            //             "z" : 0.0
+            //         },
+            //         "scale" :
+            //         {
+            //             "x" : 1.0,
+            //             "y" : 1.0,
+            //             "z" : 1.0
+            //         }
+            //     },
+            //     "ParticlePhysicsComponent" :
+            //     {
+            //         "mass" : 17.0
+            //     },
+            //     "RenderingComponent" :
+            //     {
+            //         "mesh" : "Box.obj"
+            //         /*"material" : 0*/
+            //     }
+            // },
             // Light
             {
                 "TransformComponent" :

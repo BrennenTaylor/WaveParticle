@@ -38,11 +38,6 @@ namespace Farlor
             bool ShouldKill();
         };
 
-        struct cbPerObject
-        {
-            DirectX::XMMATRIX WVP;
-        };
-
         ParticleSystem(int numParticles);
 
         void AddParticle(WaveParticle particle);
@@ -83,9 +78,6 @@ namespace Farlor
         ID3D11PixelShader* m_pPixelShader = nullptr;
 
         ID3D11InputLayout* m_inputLayout = nullptr;
-
-        ID3D11Buffer* m_cbPerObjectBuffer = nullptr;
-        cbPerObject m_cbPerObject;
 
         ID3D11RasterizerState* m_rasterState = nullptr;
     };
