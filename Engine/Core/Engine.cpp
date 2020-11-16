@@ -357,7 +357,7 @@ namespace Farlor
 
             while (physicsUpdate.ShouldUpdate())
             {
-                g_WaveParticles.Update(physicsUpdate.m_updateRate);
+                g_WaveParticles.Update();
                 // g_PhysicsSystem.Update(physicsUpdate.m_updateRate);
             }
 

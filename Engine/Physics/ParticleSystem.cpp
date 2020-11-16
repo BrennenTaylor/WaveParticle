@@ -97,24 +97,59 @@ namespace Farlor
         //newParticle.m_particleSize = 1.0;
         //AddParticle(newParticle);
 
+
+        //  Circle like start
+        //{
+        //    const int numPoints = 1;
+        //    double angle = 0.0f;
+        //    double deltaTheta = TWO_PI / 3.0;
+
+        //    float amplitude = 3.0f;
+        //    float radius = 0.25;
+        //    float speed = 0.1f;
+
+        //    Vector3 startPosition = Vector3(0.0f, 0.0f, 0.0f);
+        //    for (int i = 0; i < numPoints; i++)
+        //    {
+        //        Vector3 planeOrigin = Vector3(0.0f, 0.0f, 0.0f);
+        //        Vector3 direction = Vector3(cos(angle), sin(angle), 0.0f).Normalized();
+
+        //        float timeTraveled = (radius) * (1.0f / speed);
+
+        //        WaveParticle newParticle(planeOrigin, direction, (float)g_TimerGame.TotalTime() - timeTraveled, radius, speed);
+        //        newParticle.m_dispersionAngle = deltaTheta;
+        //        newParticle.m_amplitude = amplitude;
+        //        AddParticle(newParticle);
+
+        //        //std::cout << "Particle direction: " << direction.Normalized() << std::endl;
+        //        //std::cout << "Dispersion angle: " << deltaTheta << std::endl;
+
+        //        angle += deltaTheta;
+        //    }
+        //}
+
+
+
+
         // Circle start
         {
             const int numPoints = 3;
             double angle = 0.0f;
             double deltaTheta = TWO_PI / numPoints;
 
-            float amplitude = 10.0f;
-            float radius = 0.5;
-            float speed = 0.2f;
+            float amplitude = 3.0f;
+            float radius = 0.25;
+            float speed = 0.1f;
 
             Vector3 startPosition = Vector3(0.0f, 0.0f, 0.0f);
             for (int i = 0; i < numPoints; i++)
             {
                 Vector3 planeOrigin = Vector3(0.0f, 0.0f, 0.0f);
-                Vector3 direction = Vector3(cos(angle), sin(angle), 0.0f);
-                planeOrigin += direction * (radius / 2.0f);
-                direction = direction.Normalized();
-                WaveParticle newParticle(planeOrigin, direction, (float)g_TimerGame.TotalTime(), radius, speed);
+                Vector3 direction = Vector3(cos(angle), sin(angle), 0.0f).Normalized();
+
+                float timeTraveled = (radius) * (1.0f / speed);
+
+                WaveParticle newParticle(planeOrigin, direction, (float)g_TimerGame.TotalTime() - timeTraveled, radius, speed);
                 newParticle.m_dispersionAngle = deltaTheta;
                 newParticle.m_amplitude = amplitude;
                 AddParticle(newParticle);
@@ -125,6 +160,11 @@ namespace Farlor
                 angle += deltaTheta;
             }
         }
+
+        // Call update a number of times for initial particle splitting to occure
+        Update();
+        Update();
+        Update();
 
         // Straight line wave
         /*{
@@ -230,7 +270,7 @@ namespace Farlor
     }
 
 
-    void ParticleSystem::Update(float timestep)
+    void ParticleSystem::Update()
     {
         int sampleDensity = 1;
         std::vector<WaveParticle> m_newParticles;
@@ -895,7 +935,7 @@ namespace Farlor
                     Vector3 pos = m_waveParticles[i].m_birthPosition;
                     Vector3 direction = m_waveParticles[i].m_direction;
                     float originalAngle = m_waveParticles[i].m_dispersionAngle;
-                    float angle = originalAngle / 2.0f * (1.0f / 3.0f);
+                    float angle = originalAngle * (1.0f / 3.0f);
                     float negAngle = -1.0f * angle;
 
                     // std::cout << "Angle: " << angle << std::endl;
@@ -927,9 +967,9 @@ namespace Farlor
                     WaveParticle particleSame = WaveParticle(pos, Vector3(direction.x, direction.y, 0.0f), m_waveParticles[i].m_birthTime, m_waveParticles[i].m_particleSize,
                         m_waveParticles[i].m_speed);
 
-                    particleLeft.m_currentPosition = particleLeft.m_birthPosition + particleLeft.m_direction * timeMoved;
-                    particleRight.m_currentPosition = particleRight.m_birthPosition + particleRight.m_direction * timeMoved;
-                    particleSame.m_currentPosition = particleSame.m_birthPosition + particleSame.m_direction * timeMoved;
+                    particleLeft.m_currentPosition = particleLeft.m_birthPosition + particleLeft.m_direction * (timeMoved * m_waveParticles[i].m_speed);
+                    particleRight.m_currentPosition = particleRight.m_birthPosition + particleRight.m_direction * (timeMoved * m_waveParticles[i].m_speed);
+                    particleSame.m_currentPosition = particleSame.m_birthPosition + particleSame.m_direction * (timeMoved * m_waveParticles[i].m_speed);
 
                     // std::cout << "Left Current Position: " <<  particleLeft.m_currentPosition << std::endl;
                     // std::cout << "Right Current Position: " << particleRight.m_currentPosition << std::endl;
@@ -952,11 +992,15 @@ namespace Farlor
             }
 
             m_waveParticles[i].m_currentPosition = newPoint;
-            m_waveParticles[i].m_amplitude = m_waveParticles[i].m_amplitude - (g_amplitudeDropRate * timeMoved);
+            m_waveParticles[i].m_amplitude = m_waveParticles[i].m_amplitude;
 
             m_waveParticles[i].m_timeMoved = timeMoved;
         }
 
+        if ( m_newParticles.size() > 0)
+            std::cout << "Num particles added: " << m_newParticles.size() << std::endl;
+        
+        
         for (int i = 0; i < m_newParticles.size(); i++)
         {
             //std::cout << "Adding particle" << std::endl;

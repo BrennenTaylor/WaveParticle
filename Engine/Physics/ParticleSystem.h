@@ -51,7 +51,7 @@ namespace Farlor
             m_collisionSegments.push_back(segment);
         }
 
-        void Update(float timestep);
+        void Update();
 
         void InitializeBuffers(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext);
         void UpdateBuffers(ID3D11Device* pDevice, ID3D11DeviceContext* pDeviceContext);
