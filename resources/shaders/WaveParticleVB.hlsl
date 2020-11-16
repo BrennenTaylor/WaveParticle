@@ -2,7 +2,8 @@
 #define HALF_PI 1.57079632679
 #define EPSILON 0.00024414;
 
-#define BLUR_RADIUS 25.5f
+#define BLUR_RADIUS 25.6f
+// #define BLUR_RADIUS 51.2f
 #define TEXTURE_WIDTH 512
 
 #define DX_SCALE 0.03f
