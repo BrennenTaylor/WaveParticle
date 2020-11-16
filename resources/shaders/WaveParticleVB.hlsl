@@ -2,7 +2,7 @@
 #define HALF_PI 1.57079632679
 #define EPSILON 0.00024414;
 
-#define BLUR_RADIUS 15
+#define BLUR_RADIUS 25.5f
 #define TEXTURE_WIDTH 512
 
 #define DX_SCALE 0.03f
@@ -58,7 +58,7 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
     float4 gradient = float4(f123.y, 0, 0, 1); // initialize gradient at this pixel
     float2 gradCorr = float2(f123.z, f45v.y); // initialize gradient correction
 
-    for (int i = 1; i <= BLUR_RADIUS; i++)
+    for (int i = 1; i <= floor(BLUR_RADIUS); i++)
     {
         float offset = i / float(TEXTURE_WIDTH);
 
@@ -68,7 +68,7 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
         float4 f45vB = waveParticleHB2Texture.Sample(waveParticleSampler, input.texCoord + float2(0, offset));
         float4 f45vT = waveParticleHB2Texture.Sample(waveParticleSampler, input.texCoord + float2(0, -offset));
 
-        float3 f = GetFilter(i / float(BLUR_RADIUS));
+        float3 f = GetFilter(i / BLUR_RADIUS);
 
         deviation.x += (f45vB.x + f45vT.x) * f.x * f.x; // deviation X
         deviation.y += (f45vB.y - f45vT.y) * 2 * f.x * f.y; // deviation Y

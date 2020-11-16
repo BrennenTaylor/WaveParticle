@@ -2,7 +2,7 @@
 #define HALF_PI 1.57079632679
 #define EPSILON 0.00024414;
 
-#define BLUR_RADIUS 15
+#define BLUR_RADIUS 25.5f
 #define TEXTURE_WIDTH 512
 
 Texture2D waveParticleTexture : register(t0);
@@ -51,17 +51,18 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
     float2 texCoord = input.texCoord;
 
     float3 velAmp = waveParticleTexture.Sample(waveParticleSampler, texCoord).xyz;
-    float4 f123 = float4(velAmp.z, 0, 0.5 * velAmp.z, 1);
+    float4 f123 = float4(velAmp.z, 0, -1.0 * 0.5 * velAmp.z, 1);
     float4 f45v = float4(0, velAmp.z, sign(velAmp.z) * velAmp.xy);
 
-    for (int i = 1; i <= BLUR_RADIUS; i++)
+    for (int i = 1; i <= floor(BLUR_RADIUS); i++)
     {
+        // Offset should be number of pixels that
         float offset = i / float(TEXTURE_WIDTH);
         float4 velAmpL = waveParticleTexture.Sample(waveParticleSampler, texCoord + float2(offset, 0));
         float4 velAmpR = waveParticleTexture.Sample(waveParticleSampler, texCoord + float2(-offset, 0));
         float ampSum = velAmpL.z + velAmpR.z;
         float ampDif = velAmpL.z - velAmpR.z;
-        float3 f = GetFilter(i / float(BLUR_RADIUS));
+        float3 f = GetFilter(i / BLUR_RADIUS);
         f123.x += ampSum * f.x;
         f123.y += ampDif * f.y;
         f123.z += ampSum * f.z;

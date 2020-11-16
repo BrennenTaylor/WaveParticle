@@ -112,7 +112,69 @@ namespace Farlor
         //newParticle.m_particleSize = 1.0;
         //AddParticle(newParticle);
 
-        const uint32_t numWaveParticles = 10000;
+        {
+            Farlor::Vector3 position(0.0f, 0.0f, 0.0);
+            Farlor::Vector3 direction(1.0f, 0.0f, 0.0);
+            float amplitude = 1.0f;
+            float radius = 1.0;
+            float speed = 0.2f;
+
+            WaveParticle newParticle(position, direction.Normalized(), (float)g_TimerGame.TotalTime(), radius, speed);
+            newParticle.m_amplitude = amplitude;
+            AddParticle(newParticle);
+        }
+
+        {
+            Farlor::Vector3 position(0.0f, (-1.0f / 10.0f) * 1.0f, 0.0);
+            Farlor::Vector3 direction(1.0f, 0.0f, 0.0);
+            float amplitude = 1.0f;
+            float radius = 1.0;
+            float speed = 0.2f;
+
+            WaveParticle newParticle(position, direction.Normalized(), (float)g_TimerGame.TotalTime(), radius, speed);
+            newParticle.m_amplitude = amplitude;
+            AddParticle(newParticle);
+        }
+
+        {
+            Farlor::Vector3 position(0.0f, (1.0f / 10.0f) * 1.0f, 0.0);
+            Farlor::Vector3 direction(1.0f, 0.0f, 0.0);
+            float amplitude = 1.0f;
+            float radius = 1.0;
+            float speed = 0.2f;
+
+            WaveParticle newParticle(position, direction.Normalized(), (float)g_TimerGame.TotalTime(), radius, speed);
+            newParticle.m_amplitude = amplitude;
+            AddParticle(newParticle);
+        }
+
+        {
+            Farlor::Vector3 position(0.0f, (-1.0f / 10.0f) * 2.0f, 0.0);
+            Farlor::Vector3 direction(1.0f, 0.0f, 0.0);
+            float amplitude = 1.0f;
+            float radius = 1.0;
+            float speed = 0.2f;
+
+            WaveParticle newParticle(position, direction.Normalized(), (float)g_TimerGame.TotalTime(), radius, speed);
+            newParticle.m_amplitude = amplitude;
+            AddParticle(newParticle);
+        }
+
+        {
+            Farlor::Vector3 position(0.0f, (1.0f / 10.0f) * 2.0f, 0.0);
+            Farlor::Vector3 direction(1.0f, 0.0f, 0.0);
+            float amplitude = 1.0f;
+            float radius = 1.0;
+            float speed = 0.2f;
+
+            WaveParticle newParticle(position, direction.Normalized(), (float)g_TimerGame.TotalTime(), radius, speed);
+            newParticle.m_amplitude = amplitude;
+            AddParticle(newParticle);
+        }
+
+
+
+        /*const uint32_t numWaveParticles = 10000;
 
         std::uniform_real_distribution<float> uniformZeroToOne(0.0f, 1.0f);
 
@@ -120,14 +182,14 @@ namespace Farlor
         {
             Farlor::Vector3 position(uniformZeroToOne(m_gen) * 10.f - 5.0f, uniformZeroToOne(m_gen) * 10.f - 5.0f, 0.0);
             Farlor::Vector3 direction( uniformZeroToOne(m_gen) * 10.f - 5.0f, uniformZeroToOne(m_gen) * 10.f - 5.0f, 0.0);
-            float height = uniformZeroToOne(m_gen) * 0.1 + 0.2;
-            float radius = uniformZeroToOne(m_gen) * 0.05 + 0.1;
-            float speed = uniformZeroToOne(m_gen) * 0.5;
+            float height = 1.0;
+            float radius = 1.0;
+            float speed = 0.2;
             
             WaveParticle newParticle(position, direction.Normalized(), (float)g_TimerGame.TotalTime(), radius, speed);
             newParticle.m_amplitude = height;
             AddParticle(newParticle);
-        }
+        }*/
     }
 
     void ParticleSystem::AddParticle(WaveParticle particle)
