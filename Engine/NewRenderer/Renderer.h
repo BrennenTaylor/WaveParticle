@@ -22,6 +22,7 @@
 #include "Mesh.h"
 #include "CBs.h"
 #include "Shader.h"
+#include "TexturedQuad.h"
 #include "ViewMode.h"
 
 
@@ -35,6 +36,8 @@ namespace Farlor
 class Renderer
     {
     public:
+        Renderer();
+
         void Initialize(GameWindow gameWindow);
         void Render();
         void Render(RenderingComponent& renderingComponent);
@@ -129,9 +132,9 @@ class Renderer
         ViewMode m_currentViewMode;
 
         // Wave Particle stuff
-        ID3D11Texture2D* m_pWaveParticleRenderTarget;
-        ID3D11RenderTargetView* m_pWPRTView;
-        ID3D11ShaderResourceView* m_pWPSRView;
+        ID3D11Texture2D* m_pWaveParticleRenderTarget = nullptr;
+        ID3D11RenderTargetView* m_pWPRTView = nullptr;
+        ID3D11ShaderResourceView* m_pWPSRView = nullptr;
 
         ID3D11Texture2D* m_pWPHB1B = nullptr;
         ID3D11RenderTargetView* m_pWPHB1RTV = nullptr;
@@ -149,12 +152,25 @@ class Renderer
         ID3D11RenderTargetView* m_pWPVB2RTV = nullptr;
         ID3D11ShaderResourceView* m_pWPVB2SRV = nullptr;
 
+        ID3D11DepthStencilState * pDSState = nullptr;
+
+
+        // Caustic Stuff
+        ID3D11Texture2D* m_pCausticTextureBuffer = nullptr;
+        ID3D11RenderTargetView* m_pCausticRTV = nullptr;
+        ID3D11ShaderResourceView* m_pCausticSRV = nullptr;
+
+        ID3D11Texture2D* m_pCausticsMidPass00TextureBuffer = nullptr;
+        ID3D11RenderTargetView* m_pCausticsMidPass00RTV = nullptr;
+        ID3D11ShaderResourceView* m_pCausticsMidPass00SRV = nullptr;
+
+        ID3D11Texture2D* m_pCausticsMidPass01TextureBuffer = nullptr;
+        ID3D11RenderTargetView* m_pCausticsMidPass01RTV = nullptr;
+        ID3D11ShaderResourceView* m_pCausticsMidPass01SRV = nullptr;
 
         std::vector<ParticleSystem> m_particleSystems;
-
-        ID3D11DepthStencilState * pDSState;
-
         HeightField m_waterSurface;
+        TexturedQuad m_TexturedQuad;
 
 
         static std::map<std::string, RenderResourceType> s_stringToTypeMapping;

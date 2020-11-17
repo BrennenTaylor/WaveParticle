@@ -43,6 +43,15 @@ namespace Farlor
         { RenderResourceFormat::R32G32B32A32F, DXGI_FORMAT_R32G32B32A32_FLOAT }
     };
 
+    Renderer::Renderer()
+        : m_TexturedQuad(
+            Farlor::Vector3(-5.0f, -1.0f, -5.0f),
+            Farlor::Vector3(-5.0f, -1.0f, 5.0f),
+            Farlor::Vector3(5.0f, -1.0f, 5.0f),
+            Farlor::Vector3(5.0f, -1.0f, -5.0f)
+        )
+    {
+    }
 
     void Renderer::Initialize(GameWindow gameWindow)
     {
@@ -626,6 +635,145 @@ namespace Farlor
             }
         }
 
+        // Caustic Texture
+        {
+            D3D11_TEXTURE2D_DESC causticTextureDesc = { 0 };
+            causticTextureDesc.Width = WaveParticleHeightmapRenderTargetSize;
+            causticTextureDesc.Height = WaveParticleHeightmapRenderTargetSize;
+            causticTextureDesc.MipLevels = 1;
+            causticTextureDesc.ArraySize = 1;
+            causticTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            causticTextureDesc.SampleDesc.Count = 1;
+            causticTextureDesc.SampleDesc.Quality = 0;
+            causticTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+            causticTextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+            causticTextureDesc.CPUAccessFlags = 0;
+            causticTextureDesc.MiscFlags = 0;
+
+            result = m_pDevice->CreateTexture2D(&causticTextureDesc, 0, &m_pCausticTextureBuffer);
+            if (FAILED(result))
+            {
+                std::cout << "Failed to create caustic texture: m_pCausticTextureBuffer" << std::endl;
+            }
+
+            D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+            ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
+            renderTargetViewDesc.Format = causticTextureDesc.Format;
+            renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            renderTargetViewDesc.Texture2D.MipSlice = 0;
+            result = m_pDevice->CreateRenderTargetView(m_pCausticTextureBuffer, &renderTargetViewDesc, &m_pCausticRTV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create caustic texture RTV")
+            }
+
+
+
+            D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+            ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
+            shaderResourceViewDesc.Format = causticTextureDesc.Format;
+            shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+            shaderResourceViewDesc.Texture2D.MipLevels = 1;
+            result = m_pDevice->CreateShaderResourceView(m_pCausticTextureBuffer, &shaderResourceViewDesc, &m_pCausticSRV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create caustic texture SRV")
+            }
+        }
+
+
+        // Mid caustics
+        {
+            D3D11_TEXTURE2D_DESC causticTextureDesc = { 0 };
+            causticTextureDesc.Width = WaveParticleHeightmapRenderTargetSize;
+            causticTextureDesc.Height = WaveParticleHeightmapRenderTargetSize;
+            causticTextureDesc.MipLevels = 1;
+            causticTextureDesc.ArraySize = 1;
+            causticTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            causticTextureDesc.SampleDesc.Count = 1;
+            causticTextureDesc.SampleDesc.Quality = 0;
+            causticTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+            causticTextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+            causticTextureDesc.CPUAccessFlags = 0;
+            causticTextureDesc.MiscFlags = 0;
+
+            result = m_pDevice->CreateTexture2D(&causticTextureDesc, 0, &m_pCausticsMidPass00TextureBuffer);
+            if (FAILED(result))
+            {
+                std::cout << "Failed to create caustic texture: m_pCausticsMidPass00TextureBuffer" << std::endl;
+            }
+
+            D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+            ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
+            renderTargetViewDesc.Format = causticTextureDesc.Format;
+            renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            renderTargetViewDesc.Texture2D.MipSlice = 0;
+            result = m_pDevice->CreateRenderTargetView(m_pCausticsMidPass00TextureBuffer, &renderTargetViewDesc, &m_pCausticsMidPass00RTV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create mid caustic texture 00 RTV")
+            }
+
+
+
+            D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+            ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
+            shaderResourceViewDesc.Format = causticTextureDesc.Format;
+            shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+            shaderResourceViewDesc.Texture2D.MipLevels = 1;
+            result = m_pDevice->CreateShaderResourceView(m_pCausticsMidPass00TextureBuffer, &shaderResourceViewDesc, &m_pCausticsMidPass00SRV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create mid caustic texture 00 SRV")
+            }
+        }
+        {
+            D3D11_TEXTURE2D_DESC causticTextureDesc = { 0 };
+            causticTextureDesc.Width = WaveParticleHeightmapRenderTargetSize;
+            causticTextureDesc.Height = WaveParticleHeightmapRenderTargetSize;
+            causticTextureDesc.MipLevels = 1;
+            causticTextureDesc.ArraySize = 1;
+            causticTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            causticTextureDesc.SampleDesc.Count = 1;
+            causticTextureDesc.SampleDesc.Quality = 0;
+            causticTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+            causticTextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+            causticTextureDesc.CPUAccessFlags = 0;
+            causticTextureDesc.MiscFlags = 0;
+
+            result = m_pDevice->CreateTexture2D(&causticTextureDesc, 0, &m_pCausticsMidPass01TextureBuffer);
+            if (FAILED(result))
+            {
+                std::cout << "Failed to create caustic texture: m_pCausticsMidPass01TextureBuffer" << std::endl;
+            }
+
+            D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+            ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
+            renderTargetViewDesc.Format = causticTextureDesc.Format;
+            renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            renderTargetViewDesc.Texture2D.MipSlice = 0;
+            result = m_pDevice->CreateRenderTargetView(m_pCausticsMidPass01TextureBuffer, &renderTargetViewDesc, &m_pCausticsMidPass01RTV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create mid caustic texture 01 RTV")
+            }
+
+
+
+            D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+            ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
+            shaderResourceViewDesc.Format = causticTextureDesc.Format;
+            shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+            shaderResourceViewDesc.Texture2D.MipLevels = 1;
+            result = m_pDevice->CreateShaderResourceView(m_pCausticsMidPass01TextureBuffer, &shaderResourceViewDesc, &m_pCausticsMidPass01SRV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create mid caustic texture 01 SRV")
+            }
+        }
 
         // Depth test parameters
         dsDesc.DepthEnable = false;
@@ -659,6 +807,7 @@ namespace Farlor
         // ensure that our particle system and terrain systems initialized
         g_WaveParticles.InitializeBuffers(m_pDevice, m_pDeviceContext);
         m_waterSurface.Initialize(10.0, 10.0, Farlor::Vector3(-5.0, 0.0, -5.0), 500, m_pDevice, m_pDeviceContext);
+        m_TexturedQuad.Initialize(m_pDevice, m_pDeviceContext);
     }
 
     void Renderer::Render()
@@ -737,6 +886,84 @@ namespace Farlor
             m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
             m_pDeviceContext->Draw(3, 0);
         }
+
+
+        // Render caustic map
+        {
+            m_pDeviceContext->ClearRenderTargetView(m_pCausticsMidPass00RTV, clearColor);
+            m_pDeviceContext->ClearRenderTargetView(m_pCausticsMidPass01RTV, clearColor);
+        }
+        {
+            float causticClearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+            m_pDeviceContext->ClearRenderTargetView(m_pCausticRTV, causticClearColor);
+        }
+
+        // Caustics Pass 00
+        {
+            ID3D11RenderTargetView* pRenderTargets[8];
+            pRenderTargets[0] = m_pCausticsMidPass00RTV;
+            pRenderTargets[1] = m_pCausticsMidPass01RTV;
+            pRenderTargets[2] = nullptr;
+            pRenderTargets[3] = nullptr;
+            pRenderTargets[4] = nullptr;
+            pRenderTargets[5] = nullptr;
+            pRenderTargets[6] = nullptr;
+            pRenderTargets[7] = nullptr;
+            m_pDeviceContext->OMSetRenderTargets(8, pRenderTargets, m_pWaveParticleDSV);
+
+            ID3D11ShaderResourceView* pSRVs[8];
+            pSRVs[0] = m_pWPVB1SRV;
+            pSRVs[1] = nullptr;
+            pSRVs[2] = nullptr;
+            pSRVs[3] = nullptr;
+            pSRVs[4] = nullptr;
+            pSRVs[5] = nullptr;
+            pSRVs[6] = nullptr;
+            pSRVs[7] = nullptr;
+            m_pDeviceContext->PSSetShaderResources(0, 8, pSRVs);
+            m_pDeviceContext->PSSetSamplers(0, 1, &m_pClampSamplerState);
+
+            m_shaders["Caustics00"].SetPipeline(m_pDeviceContext);
+
+            m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            m_pDeviceContext->Draw(3, 0);
+        }
+
+
+        // Caustics Pass 01
+        {
+            ID3D11RenderTargetView* pRenderTargets[8];
+            pRenderTargets[0] = m_pCausticRTV;
+            pRenderTargets[1] = nullptr;
+            pRenderTargets[2] = nullptr;
+            pRenderTargets[3] = nullptr;
+            pRenderTargets[4] = nullptr;
+            pRenderTargets[5] = nullptr;
+            pRenderTargets[6] = nullptr;
+            pRenderTargets[7] = nullptr;
+            m_pDeviceContext->OMSetRenderTargets(8, pRenderTargets, m_pWaveParticleDSV);
+
+            ID3D11ShaderResourceView* pSRVs[2];
+            pSRVs[0] = m_pCausticsMidPass00SRV;
+            pSRVs[1] = m_pCausticsMidPass01SRV;
+            pSRVs[2] = nullptr;
+            pSRVs[3] = nullptr;
+            pSRVs[4] = nullptr;
+            pSRVs[5] = nullptr;
+            pSRVs[6] = nullptr;
+            pSRVs[7] = nullptr;
+            m_pDeviceContext->PSSetShaderResources(0, 8, pSRVs);
+            m_pDeviceContext->PSSetSamplers(0, 1, &m_pClampSamplerState);
+
+            m_shaders["Caustics01"].SetPipeline(m_pDeviceContext);
+
+            m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            m_pDeviceContext->Draw(3, 0);
+        }
+
+
+
+
 
 
         // Set back to main viewport
@@ -827,6 +1054,13 @@ namespace Farlor
         m_pDeviceContext->UpdateSubresource(m_cbCameraParamsBuffer, 0, 0, &m_cbCameraParams, 0, 0);
 
         m_waterSurface.Render(m_pDevice, m_pDeviceContext, m_pWPVB1SRV, m_pWPVB2SRV, m_pClampSamplerState, m_cbCameraParamsBuffer);
+
+
+
+
+        // Render textured quad
+
+        m_TexturedQuad.Render(m_pDevice, m_pDeviceContext, m_pCausticSRV, m_pClampSamplerState, m_cbCameraParamsBuffer);
 
 
         m_pSwapChain->Present(0, 0);

@@ -84,6 +84,18 @@
             "name": "WaveParticleVB",
             "hasVS": true,
             "hasPS": true
+        },
+        {
+            "filename": "Caustics00.hlsl",
+            "name": "Caustics00",
+            "hasVS": true,
+            "hasPS": true
+        },
+        {
+            "filename": "Caustics01.hlsl",
+            "name": "Caustics01",
+            "hasVS": true,
+            "hasPS": true
         }
     ]
 }

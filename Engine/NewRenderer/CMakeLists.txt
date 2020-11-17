@@ -9,6 +9,7 @@ set (ENGINE_SOURCES
     NewRenderer/Mesh.cpp
     NewRenderer/Renderer.cpp
     NewRenderer/Shader.cpp
+    NewRenderer/TexturedQuad.cpp
     NewRenderer/Vertex.cpp
     NewRenderer/WICTextureLoader.cpp
 
@@ -26,8 +27,9 @@ set (ENGINE_INCLUDES
     NewRenderer/Renderer.h
     NewRenderer/RenderingComponent.h
     NewRenderer/Shader.h
+    NewRenderer/TexturedQuad.h
     NewRenderer/Vertex.h
     NewRenderer/WICTextureLoader.h
-    
+
     PARENT_SCOPE
 )
