@@ -19,8 +19,8 @@ static float3 baseWaterPlaneBottomLeft = float3(-5.0f, 0.0f, -5.0f);
 static float groundToPlaneHeight = 2.0f;
 
 // Directional Light
-static float3 lightDir = normalize(float3(2.0f * sqrt(3.0f), -2.0f, 0.0f));
-// static float3 lightDir = normalize(float3(0.0f, -1.0f, 0.0f));
+// static float3 lightDir = normalize(float3(2.0f * sqrt(3.0f), -2.0f, 0.0f));
+static float3 lightDir = normalize(float3(0.0f, -1.0f, 0.0f));
 
 struct VS_OUTPUT
 {
@@ -101,7 +101,6 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
     }
 
     float3 baseWaterRefractedDirection = refract(lightDir, float3(0.0f, 1.0f, 0.0f), 1.0f / WATER_ROI);
-    baseWaterRefractedDirection *= 1.0f;
 
     // output.color0 = float4(lightDir, 1.0f);
     // output.color1 = float4(baseWaterRefractedDirection, 1.0f);
@@ -119,7 +118,7 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
     }
 
     // This is the P_C Point referenced in the paper
-    float3 heightmapPos = groundPlanePosition + groundToPlaneHeight * (-baseWaterRefractedDirection);
+    float3 heightmapPos = groundPlanePosition - (groundToPlaneHeight * baseWaterRefractedDirection);
 
     // output.color0 = float4(groundPlanePosition - heightmapPos, 1.0f);
     // output.color1 = float4(heightmapPos, 1.0f);
@@ -131,15 +130,16 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
     // return output;
 
     for (int i = -N_HALF; i <= N_HALF; i++)
-    //int i = 0;
+    // int i = 0;
     {
         float2 waterSampleTexcoord = waterBaseTexCoord + float2((i / TEXTURE_WIDTH), 0.0f);
 
         float3 waterBasePosition = baseWaterPlaneBottomLeft + float3(10.0f, 0.0f, 0.0f) * waterSampleTexcoord.x
             + float3(0.0f, 0.0f, 10.0f) * waterSampleTexcoord.y;
+        waterBasePosition.y = heightmapPos.y;
 
-        float3 displacement = VB1Texture.SampleLevel(waveParticleSampler, waterSampleTexcoord.xy, 0).xyz;
-        float3 displacedHeightmapPos = waterBasePosition + displacement;
+        // float3 displacement = VB1Texture.SampleLevel(waveParticleSampler, waterSampleTexcoord.xy, 0).xyz;
+        // float3 displacedHeightmapPos = waterBasePosition + displacement;
 
         float3 gradientTextureSample = VB2Texture.SampleLevel(waveParticleSampler, waterSampleTexcoord.xy, 0).xyz;
         float3 gradient = float3(0.0, 1.0, 0.0);
@@ -148,20 +148,23 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
         gradient = normalize(gradient);
 
         Ray traceRay;
-        traceRay.origin = displacedHeightmapPos;
+        traceRay.origin = waterBasePosition;
         traceRay.direction = normalize(refract(lightDir, gradient, 1.0f / WATER_ROI));
 
         Intersection inter = RayPlaneIntersection(float3(0.0f, 1.0f, 0.0f), float3(0.0f, -2.0f, 0.0f), traceRay);
 
         // Else, we calculate
-        float ax = max(0.0f, 1.0f - abs(groundPlanePosition.x - inter.pt.x));
+        float ax = max(0.0f, ((10.0f / TEXTURE_WIDTH) - abs(groundPlanePosition.x - inter.pt.x)) * (TEXTURE_WIDTH / 10.0f));
 
-        //int j = 3;
+        // int j = 2;
         for (int j = 0; j < N; j++)
         {
-            float ay = max(0.0f, 1.0f - abs(P_Gy[j] - inter.pt.y));
+            float ay = max(0.0f, ((10.0f / TEXTURE_WIDTH) - abs(P_Gy[j] - inter.pt.y)) * (TEXTURE_WIDTH / 10.0f));
             intensity[j] += ax * ay;
 
+            // output.color0 = float4(baseWaterRefractedDirection, ax);
+            // output.color1 = float4(traceRay.direction, ay);
+            // return output;
         }
     }
 
