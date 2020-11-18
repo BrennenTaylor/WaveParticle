@@ -78,45 +78,45 @@ PS_INPUT VSMain(VS_INPUT input)
 
 float4 PSMain(PS_INPUT input) : SV_TARGET
 {
-    // float3 offset = float3(0.1f, 0.1f, 0.1f);
+    float3 offset = float3(0.1f, 0.1f, 0.1f);
 
-    // float3 white = float3(1.0f, 1.0f, 1.0f);
-    // float3 black = float3(0.0f, 0.0f, 0.0f);
+    float3 white = float3(1.0f, 1.0f, 1.0f);
+    float3 black = float3(0.0f, 0.0f, 0.0f);
 
-    // float maxHeight = 1.0f;
-    // float minHeight = 0.0f;
+    float maxHeight = 1.0f;
+    float minHeight = 0.0f;
 
-    // float readHeight = input.positionWS.y;
+    float readHeight = input.positionWS.y;
 
-    // float amountWhite  = (readHeight - minHeight) / (maxHeight - minHeight);
+    float amountWhite  = (readHeight - minHeight) / (maxHeight - minHeight);
 
-    // float3 finalColor = white * amountWhite + black * (1.0f - amountWhite);
-    // finalColor += offset;
+    float3 finalColor = white * amountWhite + black * (1.0f - amountWhite);
+    finalColor += offset;
 
-    // return float4(finalColor, 1.0);
+    return float4(finalColor, 1.0);
 
-    float3 norm = normalize(input.normal);
+    // float3 norm = normalize(input.normal);
 
-    // Directional Light
-    float3 lightDir = normalize(float3(1.0f, -1.0f, 1.0f));
-    float3 L = -lightDir;
+    // // Directional Light
+    // float3 lightDir = normalize(float3(1.0f, -1.0f, 1.0f));
+    // float3 L = -lightDir;
 
-    float diffuseFac = dot(L, norm);
-    bool isLight = diffuseFac > 0.0f;
+    // float diffuseFac = dot(L, norm);
+    // bool isLight = diffuseFac > 0.0f;
 
-    float nDotL = saturate(dot(norm, L));
+    // float nDotL = saturate(dot(norm, L));
 
-    float3 diffuseMat = float3(0.0f, 1.0f, 1.0f);
-    float3 specMat = float3(1.0f, 1.0f, 1.0f);
+    // float3 diffuseMat = float3(0.0f, 1.0f, 1.0f);
+    // float3 specMat = float3(1.0f, 1.0f, 1.0f);
 
-    float3 diffuse = nDotL * diffuseMat * isLight;
+    // float3 diffuse = nDotL * diffuseMat * isLight;
 
-    float3 v = reflect(L, norm);
-    float3 toEye = normalize(input.positionWS - eyeWS);
-    float specFactor = 8.0;
-    float specAmount = pow(max(dot(v, toEye), 0.0), specFactor);
+    // float3 v = reflect(L, norm);
+    // float3 toEye = normalize(input.positionWS - eyeWS);
+    // float specFactor = 8.0;
+    // float specAmount = pow(max(dot(v, toEye), 0.0), specFactor);
 
-    float3 specular = specAmount * specMat * isLight;
+    // float3 specular = specAmount * specMat * isLight;
 
-    return float4(diffuse + specular, 1.0f);
+    // return float4(diffuse + specular, 1.0f);
 }

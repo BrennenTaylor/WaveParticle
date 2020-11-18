@@ -1053,7 +1053,7 @@ namespace Farlor
         m_cbCameraParams.m_eyePosition = Vector3(pos.x, pos.y, pos.z);
         m_pDeviceContext->UpdateSubresource(m_cbCameraParamsBuffer, 0, 0, &m_cbCameraParams, 0, 0);
 
-        //m_waterSurface.Render(m_pDevice, m_pDeviceContext, m_pWPVB1SRV, m_pWPVB2SRV, m_pClampSamplerState, m_cbCameraParamsBuffer);
+        m_waterSurface.Render(m_pDevice, m_pDeviceContext, m_pWPVB1SRV, m_pWPVB2SRV, m_pClampSamplerState, m_cbCameraParamsBuffer);
 
 
 
