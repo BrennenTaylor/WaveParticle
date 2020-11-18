@@ -18,6 +18,10 @@ static float3 groundPlaneBottomLeft = float3(-5.0f, -2.0f, -5.0f);
 static float3 baseWaterPlaneBottomLeft = float3(-5.0f, 0.0f, -5.0f);
 static float groundToPlaneHeight = 2.0f;
 
+// Directional Light
+static float3 lightDir = normalize(float3(2.0f * sqrt(3.0f), -2.0f, 0.0f));
+// static float3 lightDir = normalize(float3(0.0f, -1.0f, 0.0f));
+
 struct VS_OUTPUT
 {
     float4 position : SV_POSITION;
@@ -96,11 +100,9 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
         intensity[idx0] = 0.0f;
     }
 
-    // Directional Light
-    float3 lightDir = normalize(float3(2.0f * sqrt(3.0f), -2.0f, 0.0f));
-
     float3 baseWaterRefractedDirection = refract(lightDir, float3(0.0f, 1.0f, 0.0f), 1.0f / WATER_ROI);
-    baseWaterRefractedDirection *= -1.0f;
+    baseWaterRefractedDirection *= 1.0f;
+
     // output.color0 = float4(lightDir, 1.0f);
     // output.color1 = float4(baseWaterRefractedDirection, 1.0f);
     // return output;
@@ -109,24 +111,27 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
     float3 groundPlanePosition = groundPlaneBottomLeft + float3(10.0f, 0.0f, 0.0f) * groundPlaneTexCoord.x
         + float3(0.0f, 0.0f, 10.0f) * groundPlaneTexCoord.y;
 
+    // Y-Offsets
     float P_Gy[N];
     for (int idx1 = -N_HALF; idx1 <= N_HALF; idx1++)
     {
-        P_Gy[idx1 + N_HALF] = groundPlanePosition.y + idx1 * (1.0 / TEXTURE_WIDTH) * 10.0f;
+        P_Gy[idx1 + N_HALF] = groundPlanePosition.y + idx1 * (10.0f / TEXTURE_WIDTH);
     }
 
-    float3 heightmapPos = groundPlanePosition + groundToPlaneHeight * baseWaterRefractedDirection;
+    // This is the P_C Point referenced in the paper
+    float3 heightmapPos = groundPlanePosition + groundToPlaneHeight * (-baseWaterRefractedDirection);
 
-    // output.color0 = float4(groundPlanePosition, 1.0f);
+    // output.color0 = float4(groundPlanePosition - heightmapPos, 1.0f);
     // output.color1 = float4(heightmapPos, 1.0f);
     // return output;
 
     float2 waterBaseTexCoord = float2((heightmapPos.x - (-5.0f)) / 10.0f, (heightmapPos.z - (-5.0f)) / 10.0f);
-    // output.color0 = float4(waterBaseTexCoord, 0.0f, 1.0f);
+    // output.color0 = float4(groundPlaneTexCoord - waterBaseTexCoord, 0.0f, 1.0f);
+    // output.color1 = float4(waterBaseTexCoord, groundPlaneTexCoord.y - waterBaseTexCoord.y, 1.0f);
     // return output;
 
     for (int i = -N_HALF; i <= N_HALF; i++)
-    // int i = 0;
+    //int i = 0;
     {
         float2 waterSampleTexcoord = waterBaseTexCoord + float2((i / TEXTURE_WIDTH), 0.0f);
 
@@ -143,25 +148,23 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
         gradient = normalize(gradient);
 
         Ray traceRay;
-        traceRay.origin = heightmapPos;
+        traceRay.origin = displacedHeightmapPos;
         traceRay.direction = normalize(refract(lightDir, gradient, 1.0f / WATER_ROI));
 
         Intersection inter = RayPlaneIntersection(float3(0.0f, 1.0f, 0.0f), float3(0.0f, -2.0f, 0.0f), traceRay);
 
         // Else, we calculate
-        float ax = max(0.0f, abs(groundPlanePosition.x - inter.pt.x));
+        float ax = max(0.0f, 1.0f - abs(groundPlanePosition.x - inter.pt.x));
 
-        // int j = 3;
+        //int j = 3;
         for (int j = 0; j < N; j++)
         {
-            float ay = max(0.0f, abs(P_Gy[j] - inter.pt.y));
-            intensity[j] = ax * ay;
+            float ay = max(0.0f, 1.0f - abs(P_Gy[j] - inter.pt.y));
+            intensity[j] += ax * ay;
 
-            // output.color0 = float4(inter.pt, abs(groundPlanePosition.x - inter.pt.x));
-            // output.color1 = float4(ax, ay, intensity[3], 1.0f);
-            // return output;
         }
     }
+
 
     output.color0 = float4(intensity[0], intensity[1], intensity[2], intensity[3]);
     output.color1 = float4(intensity[4], intensity[5], intensity[6], 0.0f);
