@@ -44,6 +44,7 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
     val += Texture01.SampleLevel(CausticsSampler, input.texCoord + float2(0.0f, 1.0f / TEXTURE_WIDTH), 0).r;
     val += Texture01.SampleLevel(CausticsSampler, input.texCoord + float2(0.0f, 2.0f / TEXTURE_WIDTH), 0).g;
     val += Texture01.SampleLevel(CausticsSampler, input.texCoord + float2(0.0f, 3.0f / TEXTURE_WIDTH), 0).b;
-    output.color0 = float4(val, val, val, val);
+    float scale = 100.0f;
+    output.color0 = float4(val * scale, val * scale, val * scale, 1.0f);
     return output;
 }

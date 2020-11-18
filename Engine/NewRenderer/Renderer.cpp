@@ -913,7 +913,7 @@ namespace Farlor
 
             ID3D11ShaderResourceView* pSRVs[8];
             pSRVs[0] = m_pWPVB1SRV;
-            pSRVs[1] = nullptr;
+            pSRVs[1] = m_pWPVB2SRV;
             pSRVs[2] = nullptr;
             pSRVs[3] = nullptr;
             pSRVs[4] = nullptr;

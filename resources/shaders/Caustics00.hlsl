@@ -5,10 +5,18 @@
 #define N 7
 #define N_HALF 3
 
-#define TEXTURE_WIDTH 512
+#define TEXTURE_WIDTH 512.0f
+
+#define WATER_ROI 1.333f
 
 Texture2D VB1Texture : register(t0);
+Texture2D VB2Texture : register(t1);
 SamplerState waveParticleSampler : register(s0);
+
+
+static float3 groundPlaneBottomLeft = float3(-5.0f, -2.0f, -5.0f);
+static float3 baseWaterPlaneBottomLeft = float3(-5.0f, 0.0f, -5.0f);
+static float groundToPlaneHeight = 2.0f;
 
 struct VS_OUTPUT
 {
@@ -33,58 +41,129 @@ VS_OUTPUT VSMain(uint VertexID : SV_VertexID)
     return output;
 }
 
+struct Ray
+{
+    float3 origin;
+    float3 direction;
+};
+
+struct Intersection
+{
+    float3 normal;
+    float3 pt;
+    bool valid;
+    float t;
+};
+
+bool intersectPlane(float3 n, float3 p0, Ray ray, inout float t) 
+{ 
+    // assuming vectors are all normalized
+    float denom = dot(n, ray.direction); 
+    if (abs(denom) > 1e-6) { 
+        float3 p0l0 = p0 - ray.origin; 
+        t = dot(p0l0, n) / denom; 
+        return (t >= 0.0); 
+    }
+
+    return false;
+}
+
+Intersection RayPlaneIntersection(float3 planeNormal, float3 pointOnPlane, Ray ray) 
+{
+    Intersection inter;
+
+    float t = 0;
+    if (intersectPlane(planeNormal, pointOnPlane, ray, t))
+    {
+        inter.pt = ray.origin + ray.direction * t;
+        inter.valid = true;
+        inter.t = t;
+        return inter;
+    }
+    inter.valid = false;
+    return inter;
+}
+
 PS_OUTPUT PSMain(VS_OUTPUT input)
 {
     PS_OUTPUT output;
     output.color0 = float4(0.0f, 0.0f, 0.0f, 0.0f);
     output.color1 = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    return output;
-    // float intensity[N];
-    // for (int i = 0; i < N; i++)
-    // {
-    //     intensity[i] = 0.0f;
-    // }
 
-    // float P_Gy[N];
-    // for (int i = -N_HALF; i <= N_HALF; i++)
-    // {
-    //     P_Gy[i] = input.texCoord.y + i * (1.0 / TEXTURE_WIDTH);
-    // }
+    float intensity[N];
+    for (int idx0 = 0; idx0 < N; idx0++)
+    {
+        intensity[idx0] = 0.0f;
+    }
 
+    // Directional Light
+    float3 lightDir = normalize(float3(2.0f * sqrt(3.0f), -2.0f, 0.0f));
 
-    // float2 texCoord = input.texCoord;
-
-    // float3 bottomLeft = float3(-5.0f, 0.0f, -5.0f);
-
-    // float3 heightmapPos = bottomLeft + float3(10.0f, 0.0f, 0.0f) * texCoord.x + float3(0.0f, 0.0f, 10.0f) * texCoord.y;
-    // float3 displacement = VB1Texture.SampleLevel(ParticleTextureSamplerState, input.uv, 0).xyz;
-    // float3 centerPos = 
-
-
-    // float3 velAmp = waveParticleTexture.Sample(waveParticleSampler, texCoord).xyz;
-    // float4 f123 = float4(velAmp.z, 0, -1.0 * 0.5 * velAmp.z, 1);
-    // float4 f45v = float4(0, velAmp.z, sign(velAmp.z) * velAmp.xy);
-
-    // for (int i = 1; i <= floor(BLUR_RADIUS); i++)
-    // {
-    //     // Offset should be number of pixels that
-    //     float offset = i / float(TEXTURE_WIDTH);
-    //     float4 velAmpL = waveParticleTexture.Sample(waveParticleSampler, texCoord + float2(offset, 0));
-    //     float4 velAmpR = waveParticleTexture.Sample(waveParticleSampler, texCoord + float2(-offset, 0));
-    //     float ampSum = velAmpL.z + velAmpR.z;
-    //     float ampDif = velAmpL.z - velAmpR.z;
-    //     float3 f = GetFilter(i / BLUR_RADIUS);
-    //     f123.x += ampSum * f.x;
-    //     f123.y += ampDif * f.y;
-    //     f123.z += ampSum * f.z;
-    //     f45v.x += ampDif * f.x * f.y * 2;
-    //     f45v.y += ampSum * f.x * f.x;
-
-    //     f45v.z += (sign(velAmpL.z) * velAmpL.x + sign(velAmpR.z) * velAmpR.x) * f.x;
-    //     f45v.w += (sign(velAmpL.z) * velAmpL.y + sign(velAmpR.z) * velAmpR.y) * f.x;
-    // }
-
-    // output.col1 = f123;
-    // output.col2 = f45v;
+    float3 baseWaterRefractedDirection = refract(lightDir, float3(0.0f, 1.0f, 0.0f), 1.0f / WATER_ROI);
+    baseWaterRefractedDirection *= -1.0f;
+    // output.color0 = float4(lightDir, 1.0f);
+    // output.color1 = float4(baseWaterRefractedDirection, 1.0f);
     // return output;
+
+    float2 groundPlaneTexCoord = input.texCoord;
+    float3 groundPlanePosition = groundPlaneBottomLeft + float3(10.0f, 0.0f, 0.0f) * groundPlaneTexCoord.x
+        + float3(0.0f, 0.0f, 10.0f) * groundPlaneTexCoord.y;
+
+    float P_Gy[N];
+    for (int idx1 = -N_HALF; idx1 <= N_HALF; idx1++)
+    {
+        P_Gy[idx1 + N_HALF] = groundPlanePosition.y + idx1 * (1.0 / TEXTURE_WIDTH) * 10.0f;
+    }
+
+    float3 heightmapPos = groundPlanePosition + groundToPlaneHeight * baseWaterRefractedDirection;
+
+    // output.color0 = float4(groundPlanePosition, 1.0f);
+    // output.color1 = float4(heightmapPos, 1.0f);
+    // return output;
+
+    float2 waterBaseTexCoord = float2((heightmapPos.x - (-5.0f)) / 10.0f, (heightmapPos.z - (-5.0f)) / 10.0f);
+    // output.color0 = float4(waterBaseTexCoord, 0.0f, 1.0f);
+    // return output;
+
+    for (int i = -N_HALF; i <= N_HALF; i++)
+    // int i = 0;
+    {
+        float2 waterSampleTexcoord = waterBaseTexCoord + float2((i / TEXTURE_WIDTH), 0.0f);
+
+        float3 waterBasePosition = baseWaterPlaneBottomLeft + float3(10.0f, 0.0f, 0.0f) * waterSampleTexcoord.x
+            + float3(0.0f, 0.0f, 10.0f) * waterSampleTexcoord.y;
+
+        float3 displacement = VB1Texture.SampleLevel(waveParticleSampler, waterSampleTexcoord.xy, 0).xyz;
+        float3 displacedHeightmapPos = waterBasePosition + displacement;
+
+        float3 gradientTextureSample = VB2Texture.SampleLevel(waveParticleSampler, waterSampleTexcoord.xy, 0).xyz;
+        float3 gradient = float3(0.0, 1.0, 0.0);
+        gradient.x += gradientTextureSample.x;
+        gradient.z += gradientTextureSample.z;
+        gradient = normalize(gradient);
+
+        Ray traceRay;
+        traceRay.origin = heightmapPos;
+        traceRay.direction = normalize(refract(lightDir, gradient, 1.0f / WATER_ROI));
+
+        Intersection inter = RayPlaneIntersection(float3(0.0f, 1.0f, 0.0f), float3(0.0f, -2.0f, 0.0f), traceRay);
+
+        // Else, we calculate
+        float ax = max(0.0f, abs(groundPlanePosition.x - inter.pt.x));
+
+        // int j = 3;
+        for (int j = 0; j < N; j++)
+        {
+            float ay = max(0.0f, abs(P_Gy[j] - inter.pt.y));
+            intensity[j] = ax * ay;
+
+            // output.color0 = float4(inter.pt, abs(groundPlanePosition.x - inter.pt.x));
+            // output.color1 = float4(ax, ay, intensity[3], 1.0f);
+            // return output;
+        }
+    }
+
+    output.color0 = float4(intensity[0], intensity[1], intensity[2], intensity[3]);
+    output.color1 = float4(intensity[4], intensity[5], intensity[6], 0.0f);
+    return output;
 }
