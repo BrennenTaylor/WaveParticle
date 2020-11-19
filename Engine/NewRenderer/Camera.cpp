@@ -24,7 +24,7 @@ namespace Farlor
         m_camYaw = 0.0f;
         m_camPitch = 0.0f;
 
-        m_camPosition = DirectX::XMVectorSet(0.0f, 1.0f, 4.0f, 0.0f);
+        m_camPosition = DirectX::XMVectorSet(0.0f, 1.0f, -4.0f, 0.0f);
         m_camTarget = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
         m_speed = 20.0f;

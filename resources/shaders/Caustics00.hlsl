@@ -19,8 +19,8 @@ static float3 baseWaterPlaneBottomLeft = float3(-5.0f, 0.0f, -5.0f);
 static float groundToPlaneHeight = 2.0f;
 
 // Directional Light
-// static float3 lightDir = normalize(float3(2.0f * sqrt(3.0f), -2.0f, 0.0f));
-static float3 lightDir = normalize(float3(0.0f, -1.0f, 0.0f));
+static float3 lightDir = normalize(float3(2.0f * sqrt(3.0f), -2.0f, 0.0f));
+// static float3 lightDir = normalize(float3(0.0f, -1.0f, 0.0f));
 
 struct VS_OUTPUT
 {
@@ -138,14 +138,50 @@ PS_OUTPUT PSMain(VS_OUTPUT input)
             + float3(0.0f, 0.0f, 10.0f) * waterSampleTexcoord.y;
         waterBasePosition.y = heightmapPos.y;
 
-        // float3 displacement = VB1Texture.SampleLevel(waveParticleSampler, waterSampleTexcoord.xy, 0).xyz;
-        // float3 displacedHeightmapPos = waterBasePosition + displacement;
+        float3 displacement = VB1Texture.SampleLevel(waveParticleSampler, waterSampleTexcoord.xy, 0).xyz;
+        float3 displacedHeightmapPos = waterBasePosition + displacement;
 
         float3 gradientTextureSample = VB2Texture.SampleLevel(waveParticleSampler, waterSampleTexcoord.xy, 0).xyz;
         float3 gradient = float3(0.0, 1.0, 0.0);
         gradient.x += gradientTextureSample.x;
-        gradient.z += gradientTextureSample.z;
+        gradient.z += gradientTextureSample.y;
         gradient = normalize(gradient);
+        
+        
+        // float3 newPos = displacedHeightmapPos;
+
+        // float small = 1.0f / 1000.0f;
+
+        // float2 leftSampleUV = float2(waterSampleTexcoord.x - small, waterSampleTexcoord.y);
+        // float2 rightSampleUV = float2(waterSampleTexcoord.x + small, waterSampleTexcoord.y);
+
+        // float2 topSampleUV = float2(waterSampleTexcoord.x, waterSampleTexcoord.y - small);
+        // float2 bottomSampleUV = float2(waterSampleTexcoord.x, waterSampleTexcoord.y + small);
+
+        // float leftHeight = VB1Texture.SampleLevel(waveParticleSampler, leftSampleUV, 0).y;
+        // float rightHeight = VB1Texture.SampleLevel(waveParticleSampler, rightSampleUV, 0).y;
+
+        // float topHeight = VB1Texture.SampleLevel(waveParticleSampler, topSampleUV, 0).y;
+        // float bottomHeight = VB1Texture.SampleLevel(waveParticleSampler, bottomSampleUV, 0).y;
+
+
+        // // NOTE: The 100 here is the grid size in the x and y direction. This allows us to calculate the positions required for the normal
+        // float3 left = float3(newPos.x - 0.1, leftHeight, newPos.z);
+        // float3 right = float3(newPos.x + 0.1, rightHeight, newPos.z);
+        // float3 top = float3(newPos.x,  topHeight, newPos.z - 0.1);
+        // float3 bottom = float3(newPos.x, bottomHeight, newPos.z + 0.1);
+
+        // float3 xNorm =  right - left;
+        // float3 zNorm =  bottom - top;
+
+        // // NOTE: We dont need to project this because we dont do a world matrix transform on the grid
+        // float3 gradient = normalize(cross(zNorm, xNorm));
+
+
+        // output.color0 = float4(gradient, 1.0f);
+        // output.color1 = float4(abs(gradient), 1.0f);
+        // return output;
+
 
         Ray traceRay;
         traceRay.origin = waterBasePosition;

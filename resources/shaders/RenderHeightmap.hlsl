@@ -23,6 +23,13 @@ struct PS_INPUT
     float3 normal : NORMALS;
 };
 
+// Directional Light
+static float3 lightColor = float3(1.0f, 1.0f, 1.0f);
+static float3 lightDir = normalize(float3(2.0f * sqrt(3.0f), -2.0f, 0.0f));
+// static float3 lightDir = normalize(float3(0.0f, -1.0f, 0.0f));
+
+static float3 baseWaterPlaneBottomLeft = float3(-5.0f, 0.0f, -5.0f);
+
 Texture2D VB1Texture : register(t0);
 Texture2D VB2Texture : register(t1);
 SamplerState ParticleTextureSamplerState;
@@ -38,8 +45,9 @@ PS_INPUT VSMain(VS_INPUT input)
 
     float3 gradientTextureSample = VB2Texture.SampleLevel(ParticleTextureSamplerState, input.uv, 0).xyz;
     float3 gradient = float3(0.0, 1.0, 0.0);
-    gradient.x += gradientTextureSample.x;
-    gradient.z += gradientTextureSample.z;
+    gradient.x += gradientTextureSample.x * 10.0f;
+    gradient.z += gradientTextureSample.y * 10.0f;
+    output.normal = normalize(gradient);
 
     // float small = 1.0f / 1000.0f;
 
@@ -49,11 +57,11 @@ PS_INPUT VSMain(VS_INPUT input)
     // float2 topSampleUV = float2(input.uv.x, input.uv.y - small);
     // float2 bottomSampleUV = float2(input.uv.x, input.uv.y + small);
 
-    // float leftHeight = ParticleTexture.SampleLevel(ParticleTextureSamplerState, leftSampleUV, 0).z;
-    // float rightHeight = ParticleTexture.SampleLevel(ParticleTextureSamplerState, rightSampleUV, 0).z;
+    // float leftHeight = VB1Texture.SampleLevel(ParticleTextureSamplerState, leftSampleUV, 0).y;
+    // float rightHeight = VB1Texture.SampleLevel(ParticleTextureSamplerState, rightSampleUV, 0).y;
 
-    // float topHeight = ParticleTexture.SampleLevel(ParticleTextureSamplerState, topSampleUV, 0).z;
-    // float bottomHeight = ParticleTexture.SampleLevel(ParticleTextureSamplerState, bottomSampleUV, 0).z;
+    // float topHeight = VB1Texture.SampleLevel(ParticleTextureSamplerState, topSampleUV, 0).y;
+    // float bottomHeight = VB1Texture.SampleLevel(ParticleTextureSamplerState, bottomSampleUV, 0).y;
 
 
     // // NOTE: The 100 here is the grid size in the x and y direction. This allows us to calculate the positions required for the normal
@@ -68,8 +76,6 @@ PS_INPUT VSMain(VS_INPUT input)
     // // NOTE: We dont need to project this because we dont do a world matrix transform on the grid
     // output.normal = normalize(cross(zNorm, xNorm));
 
-    output.normal = gradient;
-
     output.positionWS = float4(newPos, 1.0);
     output.position = mul(float4(newPos, 1.0f), WVP);
     output.color = input.color;
@@ -78,45 +84,41 @@ PS_INPUT VSMain(VS_INPUT input)
 
 float4 PSMain(PS_INPUT input) : SV_TARGET
 {
-    float3 offset = float3(0.1f, 0.1f, 0.1f);
+    // float3 offset = float3(0.1f, 0.1f, 0.1f);
 
-    float3 white = float3(1.0f, 1.0f, 1.0f);
-    float3 black = float3(0.0f, 0.0f, 0.0f);
+    // float3 white = float3(1.0f, 1.0f, 1.0f);
+    // float3 black = float3(0.0f, 0.0f, 0.0f);
 
-    float maxHeight = 1.0f;
-    float minHeight = 0.0f;
+    // float maxHeight = 1.0f;
+    // float minHeight = 0.0f;
 
-    float readHeight = input.positionWS.y;
+    // float readHeight = input.positionWS.y;
 
-    float amountWhite  = (readHeight - minHeight) / (maxHeight - minHeight);
+    // float amountWhite  = (readHeight - minHeight) / (maxHeight - minHeight);
 
-    float3 finalColor = white * amountWhite + black * (1.0f - amountWhite);
-    finalColor += offset;
+    // float3 finalColor = white * amountWhite + black * (1.0f - amountWhite);
+    // finalColor += offset;
 
-    return float4(finalColor, 1.0);
+    // return float4(finalColor, 1.0);
 
-    // float3 norm = normalize(input.normal);
+    float3 N = normalize(input.normal);
 
-    // // Directional Light
-    // float3 lightDir = normalize(float3(1.0f, -1.0f, 1.0f));
-    // float3 L = -lightDir;
+    // Directional Light
+    float3 L = -lightDir;
 
-    // float diffuseFac = dot(L, norm);
-    // bool isLight = diffuseFac > 0.0f;
+    float nDotL = saturate(dot(N, L));
 
-    // float nDotL = saturate(dot(norm, L));
+    float3 diffuseMat = float3(0.0f, 1.0f, 1.0f);
+    float3 specMat = float3(1.0f, 1.0f, 1.0f);
 
-    // float3 diffuseMat = float3(0.0f, 1.0f, 1.0f);
-    // float3 specMat = float3(1.0f, 1.0f, 1.0f);
+    float3 diffuse = nDotL * diffuseMat * lightColor;
 
-    // float3 diffuse = nDotL * diffuseMat * isLight;
 
-    // float3 v = reflect(L, norm);
-    // float3 toEye = normalize(input.positionWS - eyeWS);
-    // float specFactor = 8.0;
-    // float specAmount = pow(max(dot(v, toEye), 0.0), specFactor);
+    float3 V = normalize(input.positionWS - eyeWS);
+    float3 H = normalize(L + V);
 
-    // float3 specular = specAmount * specMat * isLight;
+    float specFactor = 8.0;
+    float specular = pow(saturate(dot(N, H)), specFactor) * lightColor * specMat * nDotL;
 
-    // return float4(diffuse + specular, 1.0f);
+    return float4(diffuse + specular, 1.0f);
 }

@@ -207,7 +207,7 @@ namespace Farlor
         {
             pRawVertices[index].m_position = m_topLeft;
             pRawVertices[index].m_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-            pRawVertices[index].m_uv = Vector2(1.0f, 0.0f);
+            pRawVertices[index].m_uv = Vector2(0.0f, 1.0f);
             pRawIndices[index] = index;
             index++;
         }
