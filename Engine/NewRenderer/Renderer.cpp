@@ -399,6 +399,41 @@ namespace Farlor
         // Wave Particle stuff
         // This can be any size, but it just cant be bigger than the window as a dsv is shared.
         // TODO: Have our own dsv
+         // Wave particle main render target
+        {
+            D3D11_TEXTURE2D_DESC textureDesc = { 0 };
+            textureDesc.Width = m_width;
+            textureDesc.Height = m_height;
+            textureDesc.MipLevels = 1;
+            textureDesc.ArraySize = 1;
+            textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            textureDesc.SampleDesc.Count = 1;
+            textureDesc.SampleDesc.Quality = 0;
+            textureDesc.Usage = D3D11_USAGE_DEFAULT;
+            textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+            textureDesc.CPUAccessFlags = 0;
+            textureDesc.MiscFlags = 0;
+
+            result = m_pDevice->CreateTexture2D(&textureDesc, 0, &m_pDebugBuffer);
+            if (FAILED(result))
+            {
+                std::cout << "Failed to create wave particle texture" << std::endl;
+            }
+
+            D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+            ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
+            renderTargetViewDesc.Format = textureDesc.Format;
+            renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            renderTargetViewDesc.Texture2D.MipSlice = 0;
+            result = m_pDevice->CreateRenderTargetView(m_pDebugBuffer, &renderTargetViewDesc, &m_pDebugRTV);
+            if (FAILED(result))
+            {
+                FARLOR_LOG_ERROR("Failed to create debug RTV")
+            }
+        }
+
+
+
 
         // Wave particle main render target
         {
@@ -818,6 +853,7 @@ namespace Farlor
         {
 
             m_pDeviceContext->ClearRenderTargetView(m_pBackBufferRTV, clearColor);
+            m_pDeviceContext->ClearRenderTargetView(m_pDebugRTV, clearColor);
             m_pDeviceContext->ClearDepthStencilView(m_pWindowDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
         }
 
@@ -1043,7 +1079,11 @@ namespace Farlor
 
 
         // Render the height field
-        m_pDeviceContext->OMSetRenderTargets(1, &m_pBackBufferRTV, m_pWindowDSV);
+        ID3D11RenderTargetView* pRenderTargets[2];
+        pRenderTargets[0] = m_pBackBufferRTV;
+        pRenderTargets[1] = m_pDebugRTV;
+
+        m_pDeviceContext->OMSetRenderTargets(2, pRenderTargets, m_pWindowDSV);
 
         m_pDeviceContext->RSSetState(m_pNoCullRS);
 

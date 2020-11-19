@@ -131,6 +131,11 @@ class Renderer
 
         ViewMode m_currentViewMode;
 
+        // Debug
+        ID3D11Texture2D* m_pDebugBuffer = nullptr;
+        ID3D11RenderTargetView* m_pDebugRTV = nullptr;
+
+
         // Wave Particle stuff
         ID3D11Texture2D* m_pWaveParticleRenderTarget = nullptr;
         ID3D11RenderTargetView* m_pWPRTView = nullptr;

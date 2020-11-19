@@ -25,6 +25,8 @@ struct PS_INPUT
 Texture2D CausticTexture : register(t0);
 SamplerState ClampSamplerState;
 
+static float3 surfaceColor = float3(194 / 255.0f, 178 / 255.0f, 128 / 255.0f);
+
 // For now, we simply project full texture map to entire grid
 PS_INPUT VSMain(VS_INPUT input)
 {
@@ -39,6 +41,6 @@ PS_INPUT VSMain(VS_INPUT input)
 
 float4 PSMain(PS_INPUT input) : SV_TARGET
 {
-    float3 textureColor = CausticTexture.SampleLevel(ClampSamplerState, input.uv, 0).xyz;
+    float3 textureColor = CausticTexture.SampleLevel(ClampSamplerState, input.uv, 0).xyz * surfaceColor;
     return float4(textureColor, 1.0);
 }

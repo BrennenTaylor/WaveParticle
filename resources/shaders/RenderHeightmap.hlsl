@@ -1,3 +1,7 @@
+#define PI 3.14159265359
+#define HALF_PI 1.57079632679
+#define EPSILON 0.00024414;
+
 cbuffer cbPerObject
 {
     float4x4 WVP;
@@ -23,8 +27,14 @@ struct PS_INPUT
     float3 normal : NORMALS;
 };
 
+struct PS_OUTPUT
+{
+    float4 color0 : SV_TARGET0;
+    float4 color1 : SV_TARGET1;
+};
+
 // Directional Light
-static float3 lightColor = float3(1.0f, 1.0f, 1.0f);
+static float3 lightColor = float3(0.0f, 1.0f, 1.0f);
 static float3 lightDir = normalize(float3(2.0f * sqrt(3.0f), -2.0f, 0.0f));
 // static float3 lightDir = normalize(float3(0.0f, -1.0f, 0.0f));
 
@@ -40,8 +50,8 @@ PS_INPUT VSMain(VS_INPUT input)
     PS_INPUT output;
     // No change here
     float3 newPos = input.position;
-    float3 displacement = VB1Texture.SampleLevel(ParticleTextureSamplerState, input.uv, 0).xyz;
-    newPos += displacement;
+    // float3 displacement = VB1Texture.SampleLevel(ParticleTextureSamplerState, input.uv, 0).xyz;
+    // newPos += displacement;
 
     float3 gradientTextureSample = VB2Texture.SampleLevel(ParticleTextureSamplerState, input.uv, 0).xyz;
     float3 gradient = float3(0.0, 1.0, 0.0);
@@ -82,43 +92,118 @@ PS_INPUT VSMain(VS_INPUT input)
     return output;
 }
 
-float4 PSMain(PS_INPUT input) : SV_TARGET
+static float waterRoughness = 0.1f;
+static float waterSpec = 1.0f;
+
+float F_Shlick(float NdotL, float Kr) //Shlick Approximation = Kr + (1 - Kr) * (1 - (N.V))^5
 {
-    // float3 offset = float3(0.1f, 0.1f, 0.1f);
+    return Kr + (1.0 - Kr) * pow((1.0 - NdotL), 5.0);
+}
 
-    // float3 white = float3(1.0f, 1.0f, 1.0f);
-    // float3 black = float3(0.0f, 0.0f, 0.0f);
+float D_TrowbridgeReitz(float NH2, float roughness2) //Trowbridge-Reitz = m^2 / (1 - m^2) * cos^2(alpha) - 1
+{
+    float denom = NH2 * roughness2 + (1.0 - NH2);
+    return roughness2 / (PI * pow(denom, 2.0));
+}
 
-    // float maxHeight = 1.0f;
-    // float minHeight = 0.0f;
+float G_GGXSmith(float roughness2, float NdotV, float NdotL)
+{
+    float g1 = (NdotL * 2.0) / (NdotL + sqrt(roughness2 + (1.0 - roughness2) * pow(NdotL, 2.0)));
+    float g2 = (NdotV * 2.0) / (NdotV + sqrt(roughness2 + (1.0 - roughness2) * pow(NdotV, 2.0)));
+    return g1 * g2;
+}
 
-    // float readHeight = input.positionWS.y;
 
-    // float amountWhite  = (readHeight - minHeight) / (maxHeight - minHeight);
+PS_OUTPUT PSMain(PS_INPUT input) : SV_TARGET
+{
+    PS_OUTPUT output;
+    output.color0 = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    output.color1 = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-    // float3 finalColor = white * amountWhite + black * (1.0f - amountWhite);
-    // finalColor += offset;
+    // Height mapping from black to white
+    // {
+    // // float3 offset = float3(0.1f, 0.1f, 0.1f);
 
-    // return float4(finalColor, 1.0);
+    // // float3 white = float3(1.0f, 1.0f, 1.0f);
+    // // float3 black = float3(0.0f, 0.0f, 0.0f);
 
-    float3 N = normalize(input.normal);
+    // // float maxHeight = 1.0f;
+    // // float minHeight = 0.0f;
 
-    // Directional Light
+    // // float readHeight = input.positionWS.y;
+
+    // // float amountWhite  = (readHeight - minHeight) / (maxHeight - minHeight);
+
+    // // float3 finalColor = white * amountWhite + black * (1.0f - amountWhite);
+    // // finalColor += offset;
+
+    // // return float4(finalColor, 1.0);
+
+    // }
+
+
+
+    // {
+    
+    // // float3 N = normalize(input.normal);
+
+    // // // Directional Light
+    // // float3 L = -lightDir;
+
+    // // float nDotL = saturate(dot(N, L));
+
+    // // float3 diffuseMat = float3(0.0f, 1.0f, 1.0f);
+    // // float3 specMat = float3(1.0f, 1.0f, 1.0f);
+
+    // // float3 diffuse = nDotL * diffuseMat * lightColor;
+
+
+    // // float3 V = normalize(input.positionWS - eyeWS);
+    // // float3 H = normalize(L + V);
+
+    // // float specFactor = 8.0;
+    // // float specular = pow(saturate(dot(N, H)), specFactor) * lightColor * specMat * nDotL;
+
+    // // return float4(diffuse + specular, 1.0f);
+    // }
+
     float3 L = -lightDir;
+    
+    float3 N = normalize(input.normal);
+    float3 V = normalize(eyeWS - input.positionWS.xyz);
 
-    float nDotL = saturate(dot(N, L));
-
-    float3 diffuseMat = float3(0.0f, 1.0f, 1.0f);
-    float3 specMat = float3(1.0f, 1.0f, 1.0f);
-
-    float3 diffuse = nDotL * diffuseMat * lightColor;
+    // output.color1 = float4(V, 0.0f);
+    // return output;
 
 
-    float3 V = normalize(input.positionWS - eyeWS);
+    float NdotV = max(dot(N, V), 0.0f);
     float3 H = normalize(L + V);
 
-    float specFactor = 8.0;
-    float specular = pow(saturate(dot(N, H)), specFactor) * lightColor * specMat * nDotL;
+    float NdotL = max(dot(N, L), 0.0f);
+    float NdotH = max(dot(N, H), 0.0f);
+    float VdotH = max(dot(V, H), 0.0f);
 
-    return float4(diffuse + specular, 1.0f);
+    float NH2 = pow(NdotH, 2.0f);
+    float tan2Alpha = (NH2 - 1.0) / NH2;
+    float roughness2 = pow(clamp(waterRoughness, 0.01, 0.99), 2.0);
+    float Kr = pow((1.0 - 1.33) / (1.0 + 1.33), 2.0);
+
+
+    // return float4(NdotV, NdotL, NdotH, VdotH);
+
+    float F = F_Shlick(NdotV, Kr);
+    float D = D_TrowbridgeReitz(NH2, roughness2);
+    float G = G_GGXSmith(roughness2, NdotV, NdotL);
+    float3 specular = waterSpec * (lightColor * ((F * G * D) / ((PI * NdotV))));
+    float3 lambertian = (1.0 - waterRoughness) * (lightColor * NdotL);
+
+    float3 diffuse = lambertian; //float3(0.0f, 0.0f, 0.0f);
+    float3 CookTorrance = specular;
+
+    float3 materialAlbedo = float3(6 / 255.0f, 66 / 255.0f, 115 / 255.0f);
+
+    float3 finalColor = materialAlbedo * (diffuse + CookTorrance);
+
+    output.color0 = float4(finalColor, 1.0f);
+    return output;
 }
