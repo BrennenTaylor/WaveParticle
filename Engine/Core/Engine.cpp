@@ -42,6 +42,9 @@
 
 #include "../Util/Logger.h"
 
+#include "NewRenderer/imgui.h"
+#include "NewRenderer/imgui_impl_win32.h"
+
 namespace Farlor
 {
     typedef GameExport* (*GetGameAPIPtr)(LinearAllocator& allocator, EngineExport& engineExport);
@@ -83,6 +86,13 @@ namespace Farlor
         // Create and show the game window
         g_GameWindow.Initialize(m_fullscreen);
         g_GameWindow.ShowGameWindow();
+
+        // Set up imgui
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        ImGui::StyleColorsDark();
+
 
         g_RenderingSystem.Initialize(g_GameWindow);
 

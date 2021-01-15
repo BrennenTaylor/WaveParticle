@@ -9,6 +9,8 @@
 
 #include "../NewRenderer/Camera.h"
 
+#include "imgui_impl_win32.h"
+
 #include <windowsx.h>
 
 namespace Farlor
@@ -132,9 +134,17 @@ namespace Farlor
         }
     }
 
+    // Forward declare message handler from imgui_impl_win32.cpp
+    //extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
     LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
         WPARAM wParam, LPARAM lParam)
     {
+        if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
+        {
+            return true;
+        }
+
         static float speed = 1000;
         switch(message)
         {

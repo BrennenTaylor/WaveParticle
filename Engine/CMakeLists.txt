@@ -24,11 +24,30 @@ add_subdirectory(Util)
 
 set (ENGINE_SOURCES
     ${ENGINE_SOURCES}
+
+    imgui_demo.cpp
+    imgui_draw.cpp
+    imgui_tables.cpp
+    imgui_widgets.cpp
+    imgui.cpp
+    imgui_impl_win32.cpp
+    imgui_impl_dx11.cpp
+
     Main.cpp
 )
 
 set (ENGINE_INCLUDES
     ${ENGINE_INCLUDES}
+
+    imconfig.h
+    imgui_internal.h
+    imgui.h
+    imstb_rectpack.h
+    imstb_textedit.h
+    imstb_truetype.h
+    imgui_impl_win32.h
+    imgui_impl_dx11.h
+
     Farlor.h
 )
 

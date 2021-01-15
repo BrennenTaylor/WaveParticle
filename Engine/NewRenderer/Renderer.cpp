@@ -11,6 +11,10 @@
 
 #include "../Util/Logger.h"
 
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
+
 #include <iostream>
 
 namespace Farlor
@@ -69,6 +73,16 @@ namespace Farlor
         result = D3D11CreateDeviceAndSwapChain(
             nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, 0, 0, 0, D3D11_SDK_VERSION,
             &swapChainDesc.m_dxgiSwapChainDesc, &m_pSwapChain, &m_pDevice, 0, &m_pDeviceContext);
+
+
+
+        // After device and context made, lets make imgui stuff
+        ImGui_ImplWin32_Init(gameWindow.GetWindowHandle());
+        ImGui_ImplDX11_Init(m_pDevice, m_pDeviceContext);
+
+
+
+
 
         // Create back buffer
         m_pBackBuffer = nullptr;
@@ -848,6 +862,15 @@ namespace Farlor
     void Renderer::Render()
     {
 
+        ImGui_ImplDX11_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+
+        bool showDemoWindow = true;
+        ImGui::ShowDemoWindow(&showDemoWindow);
+
+        ImGui::Render();
+
         float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
         // Clear main render target
         {
@@ -1102,6 +1125,7 @@ namespace Farlor
 
         m_TexturedQuad.Render(m_pDevice, m_pDeviceContext, m_pCausticSRV, m_pClampSamplerState, m_cbCameraParamsBuffer);
 
+        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
         m_pSwapChain->Present(0, 0);
     }
