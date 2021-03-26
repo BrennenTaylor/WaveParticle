@@ -5,7 +5,7 @@
 #include "../Physics/Plane.h"
 #include "../Physics/LineSegment.h"
 
-#include "Math/Math.h"
+#include <FMath/FMath.h>
 
 #include <DirectXMath.h>
 
@@ -65,13 +65,13 @@ namespace Farlor
         std::vector<WaveParticle> m_waveParticles;
         std::vector<Plane> m_collisionPlanes;
         std::vector<LineSegment> m_collisionSegments;
-        int m_maxParticles;
-        int m_numActualParticles;
+        int m_maxParticles = 0;
+        int m_numActualParticles = 0;
 
-        int m_particleSize;
+        int m_particleSize = 1;
 
-        int m_vertexCount;
-        int m_indexCount;
+        int m_vertexCount = 0;
+        int m_indexCount = 0;
 
         WaveParticleVertex* m_vertices = nullptr;
         unsigned int* m_indices = nullptr;

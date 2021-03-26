@@ -10,7 +10,7 @@
 #include <time.h>
 #include <math.h>
 
-#include "../Math/CollisionFunctions.h"
+#include "CollisionFunctions.h"
 
 #include "../Core/Timer.h"
 
@@ -280,7 +280,7 @@ namespace Farlor
             float currentTime = g_TimerGame.TotalTime();
             float timeMoved = currentTime - m_waveParticles[i].m_birthTime;
 
-            const Vector3 newPoint = m_waveParticles[i].m_birthPosition + m_waveParticles[i].m_direction * (timeMoved * m_waveParticles[i].m_speed);
+            const Vector3 newPoint = m_waveParticles[i].m_birthPosition + (timeMoved * m_waveParticles[i].m_speed) * m_waveParticles[i].m_direction;
             const Vector3 oldPoint = m_waveParticles[i].m_currentPosition;
             const Vector3 normDirection = m_waveParticles[i].m_direction.Normalized();
 
@@ -967,9 +967,9 @@ namespace Farlor
                     WaveParticle particleSame = WaveParticle(pos, Vector3(direction.x, direction.y, 0.0f), m_waveParticles[i].m_birthTime, m_waveParticles[i].m_particleSize,
                         m_waveParticles[i].m_speed);
 
-                    particleLeft.m_currentPosition = particleLeft.m_birthPosition + particleLeft.m_direction * (timeMoved * m_waveParticles[i].m_speed);
-                    particleRight.m_currentPosition = particleRight.m_birthPosition + particleRight.m_direction * (timeMoved * m_waveParticles[i].m_speed);
-                    particleSame.m_currentPosition = particleSame.m_birthPosition + particleSame.m_direction * (timeMoved * m_waveParticles[i].m_speed);
+                    particleLeft.m_currentPosition = particleLeft.m_birthPosition + particleLeft.m_direction * static_cast<float>(timeMoved * m_waveParticles[i].m_speed);
+                    particleRight.m_currentPosition = particleRight.m_birthPosition + particleRight.m_direction * static_cast<float>(timeMoved * m_waveParticles[i].m_speed);
+                    particleSame.m_currentPosition = particleSame.m_birthPosition + particleSame.m_direction * static_cast<float>(timeMoved * m_waveParticles[i].m_speed);
 
                     // std::cout << "Left Current Position: " <<  particleLeft.m_currentPosition << std::endl;
                     // std::cout << "Right Current Position: " << particleRight.m_currentPosition << std::endl;

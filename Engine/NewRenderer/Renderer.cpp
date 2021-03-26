@@ -1,4 +1,4 @@
-#include "NewRenderer/Renderer.h"
+#include "Renderer.h"
 
 #include "WICTextureLoader.h"
 
@@ -11,9 +11,9 @@
 
 #include "../Util/Logger.h"
 
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
+#include "imgui.h"i
+#include "backends/imgui_impl_win32.h"
+#include "backends/imgui_impl_dx11.h"
 
 #include <iostream>
 

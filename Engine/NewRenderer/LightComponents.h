@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../ECS/Entity.h"
-#include "../Math/Math.h"
+#include <FMath/FMath.h>
 
 #include <string>
 

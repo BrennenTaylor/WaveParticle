@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Math/Math.h"
+#include <FMath/FMath.h>
 
 namespace Farlor
 {

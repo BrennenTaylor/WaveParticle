@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
-#include "Vertex.h"
+#include <FMath/FMath.h>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -186,13 +186,13 @@ namespace Farlor
             uint32_t index1 = mesh.m_indices[i+1];
             uint32_t index2 = mesh.m_indices[i+2];
 
-            Vector3 pos0 = mesh.m_vertices[index0].m_position;
-            Vector3 pos1 = mesh.m_vertices[index1].m_position;
-            Vector3 pos2 = mesh.m_vertices[index2].m_position;
+            Farlor::Vector3 pos0 = mesh.m_vertices[index0].m_position;
+            Farlor::Vector3 pos1 = mesh.m_vertices[index1].m_position;
+            Farlor::Vector3 pos2 = mesh.m_vertices[index2].m_position;
 
-            Vector3 a = pos1 - pos0;
-            Vector3 b = pos2 - pos0;
-            Vector3 faceNormal = a.Cross(b);
+            Farlor::Vector3 a = pos1 - pos0;
+            Farlor::Vector3 b = pos2 - pos0;
+            Farlor::Vector3 faceNormal = a.Cross(b);
 
             mesh.m_vertices[index0].m_normal += faceNormal;
             mesh.m_vertices[index1].m_normal += faceNormal;

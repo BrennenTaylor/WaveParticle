@@ -22,32 +22,29 @@
 #include "Memory/LinearAllocator.h"
 #include "FixedUpdate.h"
 
-// ************ GPU Pro 3: Designing a Data-Driven Renderer******
-// Look up for rendering engine design advice
-
 #include "../IGame.h"
 
 #include "../ResourceManager/ResourceManager.h"
 
+#include "../Physics/ParticleSystem.h"
 #include "../Physics/PhysicsSystem.h"
 
 #include "../NewRenderer/Renderer.h"
 #include "../NewRenderer/Camera.h"
 #include "../NewRenderer/RenderingComponent.h"
 
-#include "../Networking/NetworkManager.h"
 #include "../ECS/TransformManager.h"
 
 #include "../JsonCpp/json.h"
 
 #include "../Util/Logger.h"
 
-#include "NewRenderer/imgui.h"
-#include "NewRenderer/imgui_impl_win32.h"
+#include "../imgui/imgui.h"
+#include "../imgui/backends/imgui_impl_win32.h"
 
 namespace Farlor
 {
-    typedef GameExport* (*GetGameAPIPtr)(LinearAllocator& allocator, EngineExport& engineExport);
+    //typedef GameExport* (*GetGameAPIPtr)(LinearAllocator& allocator, EngineExport& engineExport);
 
     // Global Declarations of engine systems
     EventManager g_EventManager;
@@ -55,14 +52,16 @@ namespace Farlor
     Renderer g_RenderingSystem;
     Camera g_MainCamera{true};
     Farlor::Timer g_TimerGame;
-    NetworkManager g_NetworkManager;
     InputHandler g_InputHandler;
     TransformManager g_TransformManager;
     GameWindow g_GameWindow;
 
+    ControllerManager g_ControllerManager;
+
     // Sim specific stuff
+    // For now, we simply do wave particles
     const uint32_t numWaveParticles = 10000;
-    ParticleSystem g_WaveParticles{ numWaveParticles };
+    WaveParticles g_WaveParticles{ numWaveParticles };
 
     const bool waveParticleCameraIsMovable = false;
     Camera g_WaveParticleCamera{waveParticleCameraIsMovable};
@@ -79,10 +78,7 @@ namespace Farlor
         srand ((unsigned int)time(0));
 
         //g_WaveParticleCamera.m_camPosition = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-    }
 
-    int Engine::Run()
-    {
         // Create and show the game window
         g_GameWindow.Initialize(m_fullscreen);
         g_GameWindow.ShowGameWindow();
@@ -114,11 +110,6 @@ namespace Farlor
         //     cerr << "Failed to register input devices" << endl;
         // }
 
-        g_NetworkManager.Initialize();
-
-        // Controller Manager
-        ControllerManager controllerManager;
-
         // Resource Manager
         // ResourceManager resourceManager;
         // string resourceDescPath = "resources/Models/ModelResources.xml";
@@ -133,7 +124,11 @@ namespace Farlor
         g_EventManager.AddListener(&g_InputHandler, EventType("button_event"));
         g_EventManager.AddListener(&g_InputHandler, EventType("thumbstick_event"));
 
-        g_EventManager.AddListener(&controllerManager, EventType("controller_vibration_event"));
+        g_EventManager.AddListener(&g_ControllerManager, EventType("controller_vibration_event"));
+    }
+
+    int Engine::Run()
+    {
 
         ECSManager entityManager;
 
@@ -152,31 +147,6 @@ namespace Farlor
         EngineExport engineExport;
         engineExport.version = 1;
         engineExport.pECSManager = &entityManager;
-
-#ifdef GAME_SHARED
-        // Load the game code from Game.dll
-        // cout << "Loading Game.dll..." << endl;
-
-        // console->info("Loading Game Dll");
-
-        HINSTANCE gameLibrary = LoadLibrary("Game.dll");
-        if (!gameLibrary)
-        {
-            MessageBox(0, "Failed to load game dll", "Error", MB_OK);
-            exit(1);
-        }
-        GetGameAPIPtr GetGameAPI;
-        GetGameAPI = (GetGameAPIPtr)GetProcAddress(gameLibrary, "GetGameAPI");
-        auto* pGameExportedStuff = GetGameAPI(engineAllocator, engineExport);
-        IGame* pGame = pGameExportedStuff->game;
-
-        ASSERT(pGame);
-#else
-        auto* pGameExportedStuff = GetGameAPI(engineAllocator, engineExport);
-        IGame* pGame = pGameExportedStuff->game;
-        ASSERT(pGame);
-#endif
-        pGame->Initialize();
 
         // Read in Scene
         Json::Value sceneRoot;
@@ -322,7 +292,7 @@ namespace Farlor
 
 
         // Start controllers as connected if already when game starts
-        controllerManager.PollConnection();
+        g_ControllerManager.PollConnection();
 
 
         g_TimerGame.Reset();
@@ -360,8 +330,6 @@ namespace Farlor
             g_GameWindow.ProcessSystemMessages();
             // Get polled input
             controllerManager.PollStates();
-            // Process networking
-            g_NetworkManager.Process();
             // Run through as many events as allowed in a tick
             g_EventManager.Tick();
 
@@ -389,9 +357,9 @@ namespace Farlor
 
         engineAllocator.Clear();
 
-        // Shuting down game
-        FARLOR_LOG_INFO("Shutting down the game")
-        pGame->Shutdown();
+        //// Shuting down game
+        //FARLOR_LOG_INFO("Shutting down the game")
+        //pGame->Shutdown();
 
         FARLOR_LOG_INFO("Shutting down the engine system")
 

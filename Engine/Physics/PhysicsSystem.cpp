@@ -28,7 +28,7 @@ void PhysicsSystem::Update(float deltaTime)
             }
             else
             {
-                transformComponent.m_position += Vector3(0.0f, -10.0f, 0.0f) * deltaTime;
+                transformComponent.m_position = transformComponent.m_position + Vector3(0.0f, -10.0f, 0.0f) * deltaTime;
             }
 
             g_TransformManager.SetComponent(transformComponent, component.m_entity);

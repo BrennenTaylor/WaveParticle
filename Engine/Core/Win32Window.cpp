@@ -9,9 +9,11 @@
 
 #include "../NewRenderer/Camera.h"
 
-#include "imgui_impl_win32.h"
+#include "../imgui/backends/imgui_impl_win32.h"
 
 #include <windowsx.h>
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Farlor
 {
@@ -40,7 +42,7 @@ namespace Farlor
         // Set the main window
         WNDCLASSEX windowClass = {0};
         windowClass.cbSize = sizeof(WNDCLASSEX);
-        windowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+        windowClass.style = CS_HREDRAW | CS_VREDRAW;
         windowClass.lpfnWndProc = WndProc;
         windowClass.hInstance = GetModuleHandle(0);
         windowClass.hIcon = LoadIcon(NULL, IDI_WINLOGO);
@@ -145,6 +147,8 @@ namespace Farlor
             return true;
         }
 
+        ImGuiIO& io = ImGui::GetIO();
+
         static float speed = 1000;
         switch(message)
         {
@@ -198,13 +202,15 @@ namespace Farlor
             int newX = GET_X_LPARAM(lParam);
             int newY = GET_Y_LPARAM(lParam);
 
-            if (g_LPressed)
+            if (!io.WantCaptureMouse)
             {
-                // cout << "New Mouse: <" << newX << ", " << newY << ">" << endl;
-                g_MainCamera.m_camYaw += (float)(newX - g_PrevMouseX) * 0.01f;
-                g_MainCamera.m_camPitch += (float)(newY - g_PrevMouseY) * 0.01f;
+                if (g_LPressed)
+                {
+                    // cout << "New Mouse: <" << newX << ", " << newY << ">" << endl;
+                    g_MainCamera.m_camYaw += (float)(newX - g_PrevMouseX) * 0.01f;
+                    g_MainCamera.m_camPitch += (float)(newY - g_PrevMouseY) * 0.01f;
+                }
             }
-
             // SetCursorPos(m_gameWindow.m_width / 2, m_gameWindow.m_height / 2);
 
             g_PrevMouseX = newX;
@@ -294,18 +300,6 @@ namespace Farlor
                 // cout << "WM_KEYDOWN" << endl;
                 switch(wParam)
                 {
-
-                    // case VK_SPACE:
-                    // {
-                    // } break;
-                    //
-                    // case VK_CONTROL:
-                    // {
-                    // } break;
-                    //
-                    // case VK_SHIFT:
-                    // {
-                    // } break;
 
                     // Movement
 
